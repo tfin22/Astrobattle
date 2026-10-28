@@ -17,6 +17,7 @@ import type { Enemy } from '../types';
  */
 export class LaserAttack implements Mission {
   readonly id = 'laserAttack' as const;
+  readonly thins = true;
   total = 0;
   swoopT = 0;
   /** Escorts orbit this when their carrier is gone. */
@@ -68,7 +69,7 @@ export class LaserAttack implements Mission {
     switch (c.state) {
       case 'drift': {
         const pt = LASER_ATTACK.pattern;
-        c.x += c.vx;
+        c.x += c.vx * g.urgeSpeed;
         if (c.x < pt.edge || c.x > FB_W - pt.edge) {
           c.vx = -c.vx;
           c.x = clamp(c.x, pt.edge, FB_W - pt.edge);
@@ -96,7 +97,7 @@ export class LaserAttack implements Mission {
         if (this.beamHits(g, c)) g.killPlayer();
         if (c.t >= TUNING.laserFire) {
           g.setState(c, 'drift');
-          c.cool = Math.round((TUNING.laserCooldown / g.rp.fire) * g.rng.range(0.7, 1.3));
+          c.cool = Math.round((TUNING.laserCooldown / (g.rp.fire * g.urgeFire)) * g.rng.range(0.7, 1.3));
         }
         break;
       }
@@ -119,7 +120,7 @@ export class LaserAttack implements Mission {
   }
 
   private updateEscort(g: Game, e: Enemy): void {
-    const sp = TUNING.escortSpeed * g.rp.speed;
+    const sp = TUNING.escortSpeed * g.pace;
     const pt = LASER_ATTACK.pattern;
     const home = this.homeOf(g, e);
     switch (e.state) {
@@ -162,7 +163,7 @@ export class LaserAttack implements Mission {
         e.x += fcos(e.r) * sp;
         e.y += fsin(e.r) * sp;
         e.x = clamp(e.x, 4, FB_W - 4);
-        if (g.rng.chance(pt.dartChance * g.rp.fire)) g.aimDart(e.x, e.y + 3);
+        if (g.rng.chance(pt.dartChance * g.rp.fire * g.urgeFire)) g.aimDart(e.x, e.y + 3);
         break;
       }
       case 'returning': {
@@ -198,7 +199,7 @@ export class LaserAttack implements Mission {
 
   private swoop(g: Game): void {
     if (--this.swoopT > 0) return;
-    this.swoopT = Math.round((TUNING.escortSwoopEvery / g.rp.dive) * g.rng.range(0.6, 1.4));
+    this.swoopT = Math.round((TUNING.escortSwoopEvery / (g.rp.dive * g.urgeSpeed)) * g.rng.range(0.6, 1.4));
     const out = g.enemies.filter((e) => e.alive && e.type === 'escort' && e.state !== 'formation').length;
     if (out >= byRank(LASER_ATTACK.maxSwooping, g.level)) return;
     const form = g.enemies.filter((e) => e.alive && e.type === 'escort' && e.state === 'formation');

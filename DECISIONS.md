@@ -254,3 +254,30 @@ checked against documentation.
   was always hit at one speed and never at another. Each fighter now starts
   its weave at a random point and stops steering below y 190, so a late
   sidestep always works (as with the Swarm's kamikazes).
+
+## Playtest round 1 changes
+
+- **Force field (corrected to match the original).** Footage and write-ups
+  of the 1981 game show the field switches *off* briefly whenever you fire,
+  so your shot gets out; only enemy fire wears it away. Ours now does the
+  same: firing drops the field for 16 frames (it vanishes - the flicker
+  seen in footage), during which your shot passes and so do bombs and
+  divers. Rapid firing keeps your cover down: that's the trade. This
+  replaces "your own shots eat holes in it" from the spec.
+- **The quark/quantum cancel stays.** The original's shot really does vanish
+  when you fire again (its "quark laser"), and it's the spec's feature #1.
+  Hold-to-fire in Settings gives a never-cancelling alternative.
+- **Thinning.** As in the original, the fewer enemies left, the faster and
+  angrier they get, in Shield Wall, Laser Attack, Swarm and Space Warp (not
+  the Flagship): speed x(1 + 0.6 c^2) and fire rate x(1 + 1.2 c^2), where c
+  is the fraction cleared, so the last one is ~1.6x faster and fires 2.2x as
+  often. Combined enemy speed (rank x difficulty x thinning) is capped at
+  2x base so the last enemy stays shootable at any rank.
+- **Opening scroll.** Attract mode now runs a story crawl after the title
+  (our own text, `content/story.ts`), in banded amber, ending on the rank
+  ladder.
+- **Bug found by the new tests:** a Shield Wall diver could return to a
+  formation slot past the screen edge, where the block flipped direction
+  every step without moving, so the last fighter could be stuck off screen.
+  The march now measures the block from every surviving fighter's slot and
+  only turns at the edge it's heading for.

@@ -15,6 +15,10 @@ export interface Mission {
   /** Called when the player's shot hits an enemy. True = handled here. */
   onHit?(g: Game, e: Enemy): boolean;
   onKill?(g: Game, e: Enemy): void;
+  /** The player just fired. */
+  onPlayerFire?(g: Game): void;
+  /** Does this mission use the thinning speed-up (the last few get faster)? */
+  readonly thins?: boolean;
   /** The player just died: make the restart fair (e.g. stand lasers down). */
   onPlayerDeath?(g: Game): void;
   isClear(g: Game): boolean;

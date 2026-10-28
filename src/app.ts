@@ -26,17 +26,20 @@ import { goFullscreen, haptic, isFullscreen, keepAwake } from './platform/device
 import { DIFFICULTIES, type GameEvent, type GameMode } from './game/types';
 import type { Enemy } from './game/types';
 import { DebugOverlay } from './debug/overlay';
+import { STORY, STORY_LINE, STORY_SPEED } from './content/story';
 
 export type Screen = 'attract' | 'menu' | 'game' | 'continue' | 'initials' | 'settings' | 'practice' | 'howto';
-type AttractPage = 'title' | 'vorg' | 'scores' | 'demo' | 'table';
+type AttractPage = 'title' | 'story' | 'vorg' | 'scores' | 'demo' | 'table';
 
 const ATTRACT: { page: AttractPage; frames: number }[] = [
   { page: 'title', frames: 420 },
+  { page: 'story', frames: Math.ceil((320 - 64 + STORY.length * STORY_LINE) / STORY_SPEED) },
   { page: 'vorg', frames: 360 },
   { page: 'scores', frames: 420 },
   { page: 'demo', frames: 480 * 5 },
   { page: 'table', frames: 480 },
 ];
+const SCORES_PAGE = ATTRACT.findIndex((p) => p.page === 'scores');
 const DEMO_SEED = 19810101;
 const DEMO_SEGMENT = 480;
 const INITIAL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ.-!* ';
@@ -371,7 +374,7 @@ export class App {
       this.setScreen('initials');
     } else {
       this.game = null;
-      this.enterAttract(2);
+      this.enterAttract(SCORES_PAGE);
     }
   }
 
@@ -413,7 +416,7 @@ export class App {
       this.scores = insertScore(this.scores, entry);
       saveScores(this.scores);
       this.game = null;
-      this.enterAttract(2);
+      this.enterAttract(SCORES_PAGE);
     }
   }
 
@@ -530,7 +533,7 @@ export class App {
         this.drawHowTo();
         break;
     }
-    const showAppLine = this.screen === 'menu' || (this.screen === 'attract' && this.attractPage !== 'vorg' && this.attractPage !== 'demo');
+    const showAppLine = this.screen === 'menu' || (this.screen === 'attract' && this.attractPage !== 'vorg' && this.attractPage !== 'demo' && this.attractPage !== 'story');
     if (this.settings.subtitles && showAppLine && this.appVorg.current) {
       drawSubtitle(fb, this.appVorg.current.text, FB_H - 30);
     }
@@ -576,6 +579,21 @@ export class App {
     }
     this.header();
     switch (page) {
+      case 'story': {
+        // The opening scroll climbs up under a fixed title.
+        fb.textCentered('QUANTUM', FB_W / 2, 14, PEN.HUD2, 'big', 2);
+        fb.textCentered('CADET', FB_W / 2, 31, PEN.HUD2, 'big', 2);
+        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 50, PEN.WHITE);
+        const top = 66;
+        const y0 = FB_H - 8 - this.screenT * STORY_SPEED;
+        STORY.forEach(([text, style], i) => {
+          const y = Math.round(y0 + i * STORY_LINE);
+          if (!text || y < top || y > FB_H - 14) return;
+          const pen = style === 'head' ? PEN.HUD1 : style === 'rank' ? PEN.WHITE : PEN.HUD2;
+          fb.textCentered(text, FB_W / 2, y, pen);
+        });
+        return LOOKS.story;
+      }
       case 'title': {
         this.drawLogo(64);
         fb.textCentered('AN ARCADE HOMAGE', FB_W / 2, 140, PEN.HUD1, 'small');

@@ -32,6 +32,7 @@ export function drawMissionFront(fb: Framebuffer, g: Game, frame: number): void 
 }
 
 function drawField(fb: Framebuffer, m: ShieldWall): void {
+  if (!m.fieldUp) return; // switched off while your shot goes out
   const f = m.field;
   for (let y = m.fieldTop; y <= m.fieldBottom; y++) {
     const row = y * FB_W;

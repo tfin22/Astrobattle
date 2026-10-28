@@ -92,7 +92,7 @@ export class Flagship implements Mission {
   }
 
   private updateFighter(g: Game, f: Enemy): void {
-    const sp = TUNING.escortSpeed * g.rp.speed;
+    const sp = TUNING.escortSpeed * g.pace;
     const pt = FLAGSHIP_MISSION.pattern;
     switch (f.state) {
       case 'leaving':

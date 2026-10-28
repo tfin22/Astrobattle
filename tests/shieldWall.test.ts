@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newGame, run, idle, press } from './helpers';
+import { newGame, run, idle } from './helpers';
 import type { ShieldWall } from '../src/game/missions/shieldWall';
 import { TUNING } from '../src/tuning';
 
@@ -14,15 +14,6 @@ describe('Shield Wall', () => {
     expect(g.player.y).toBeGreaterThan(250);
   });
 
-  it("the player's own shots eat the field", () => {
-    const g = newGame();
-    const m = g.mission as ShieldWall;
-    const before = m.fieldPixels();
-    g.step(press);
-    run(g, 10);
-    expect(m.fieldPixels()).toBeLessThan(before);
-  });
-
   it('enemy bombs eat the field', () => {
     const g = newGame();
     const m = g.mission as ShieldWall;
@@ -33,21 +24,6 @@ describe('Shield Wall', () => {
     g.dropBomb(102, 200);
     run(g, 60);
     expect(m.fieldPixels()).toBeLessThan(before);
-  });
-
-  it('repeated shots dig a hole you can shoot through', () => {
-    const g = newGame();
-    for (let i = 0; i < 6; i++) {
-      g.step(press);
-      run(g, 30);
-    }
-    const hitsBefore = g.stats.hits;
-    // Eventually shots get through and reach the block.
-    for (let i = 0; i < 20; i++) {
-      g.step(press);
-      run(g, 50);
-    }
-    expect(g.stats.hits).toBeGreaterThan(hitsBefore);
   });
 
   it('the block marches and speeds up as it thins', () => {

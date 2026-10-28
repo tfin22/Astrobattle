@@ -100,6 +100,15 @@ export const TUNING = {
   nearMissDistance: 9,
   missStreakLength: 5,
 
+  /**
+   * Thinning: as a wave is cleared, the survivors speed up and fire more,
+   * ramping hardest at the end (x (1 + k * cleared^2)). The last one is
+   * quick and dangerous. Not used by the Flagship.
+   */
+  thinning: { speed: 0.6, fire: 1.2 },
+  /** Ceiling on rank x difficulty x thinning speed, so the last enemy stays shootable. */
+  maxEnemyPace: 2.0,
+
   // ---- Background pulse -------------------------------------------------------------
   pulseSlow: 52,
   pulseFast: 9,

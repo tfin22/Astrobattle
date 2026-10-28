@@ -67,6 +67,13 @@ export const LOOKS = {
       { pen: 'HUD2', y0: 0, y1: 320, colours: RAINBOW, lines: 2, scroll: 0.5 },
     ],
   }),
+  story: extend({
+    base: { HUD1: col('RED', 5) },
+    gradients: [
+      // Amber lettering, banded line by line like an old raster title.
+      { pen: 'HUD2', y0: 0, y1: 320, colours: [col('YELLOW', 7), col('AMBER', 6), col('ORANGE', 6), col('AMBER', 6)], lines: 1 },
+    ],
+  }),
   card: extend({
     base: {},
     gradients: [{ pen: 'HUD2', y0: 0, y1: 320, colours: [col('YELLOW', 7), col('ORANGE', 6), col('YELLOW', 6), col('AMBER', 6)], lines: 1, scroll: 0.25 }],

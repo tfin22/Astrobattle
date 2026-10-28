@@ -15,6 +15,7 @@ import type { Enemy } from '../types';
  */
 export class Swarm implements Mission {
   readonly id = 'swarm' as const;
+  readonly thins = true;
   total = 0;
   t = 0;
   cx = FB_W / 2;
@@ -63,7 +64,7 @@ export class Swarm implements Mission {
 
   private launch(g: Game): void {
     if (--this.diveT > 0) return;
-    this.diveT = Math.round((TUNING.swarmDiveEvery / (g.rp.dive * g.rp.swarm)) * g.rng.range(0.6, 1.3));
+    this.diveT = Math.round((TUNING.swarmDiveEvery / (g.rp.dive * g.rp.swarm * g.urgeSpeed)) * g.rng.range(0.6, 1.3));
     const members = g.enemies.filter((e) => e.alive && (e.type === 'swarmer' || e.type === 'kamikaze'));
     const diving = members.filter((e) => e.state !== 'formation').length;
     if (diving >= byRank(SWARM.maxDiving, g.level)) return;
@@ -87,7 +88,7 @@ export class Swarm implements Mission {
   }
 
   private updateMember(g: Game, e: Enemy): void {
-    const sp = TUNING.swarmDiveSpeed * g.rp.speed;
+    const sp = TUNING.swarmDiveSpeed * g.pace;
     switch (e.state) {
       case 'formation': {
         const h = this.home(e);
@@ -152,13 +153,13 @@ export class Swarm implements Mission {
     }
     e.x = clamp(x, 4, FB_W - 4);
     e.y += sp * 0.85;
-    if (t % pt.dartEvery === 20 && e.y < 200 && g.rng.chance(0.5 * g.rp.fire)) g.aimDart(e.x, e.y + 4);
+    if (t % pt.dartEvery === 20 && e.y < 200 && g.rng.chance(0.5 * g.rp.fire * g.urgeFire)) g.aimDart(e.x, e.y + 4);
   }
 
   /** Aim at where the player will be when we get there. */
   private aimKamikaze(g: Game, e: Enemy): void {
     const p = g.player;
-    const sp = TUNING.kamikazeSpeed * g.rp.speed;
+    const sp = TUNING.kamikazeSpeed * g.pace;
     const frames = Math.max(10, (p.y - e.y) / sp);
     const tx = clamp(p.x + p.vx * frames * TUNING.kamikazeLead, 8, FB_W - 8);
     const dx = tx - e.x;

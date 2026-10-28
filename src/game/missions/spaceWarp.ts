@@ -14,6 +14,7 @@ import type { Enemy } from '../types';
  */
 export class SpaceWarp implements Mission {
   readonly id = 'spaceWarp' as const;
+  readonly thins = true;
   readonly cx = FB_W / 2;
   readonly cy: number = TUNING.warpCentreY;
   total = 0;
@@ -34,7 +35,7 @@ export class SpaceWarp implements Mission {
     const active = this.warplings(g).length;
     if (--this.spawnT <= 0 && this.toSpawn > 0 && active < byRank(SPACE_WARP.maxActive, g.level)) {
       this.spawn(g);
-      this.spawnT = Math.round(g.rp.warpSpawn * g.rng.range(0.8, 1.25));
+      this.spawnT = Math.round((g.rp.warpSpawn / g.urgeSpeed) * g.rng.range(0.8, 1.25));
     }
     for (const e of g.enemies) {
       if (!e.alive || e.type !== 'warpling') continue;
@@ -55,7 +56,7 @@ export class SpaceWarp implements Mission {
   }
 
   private move(g: Game, e: Enemy): void {
-    const sp = g.rp.speed;
+    const sp = g.pace;
     const pt = SPACE_WARP.pattern;
     // Spins fast near the centre, slows as it grows; grows faster as it goes.
     e.a += TUNING.warpSpin * sp * e.p0 * (1 + pt.spinBoost / (e.r + 8));
@@ -64,7 +65,7 @@ export class SpaceWarp implements Mission {
     e.y = this.cy + fsin(e.a) * e.r * pt.squash;
     e.stage = e.r < pt.mediumAt ? 0 : e.r < pt.largeAt ? 1 : 2;
     if (e.r > TUNING.warpFireRadius && --e.cool <= 0) {
-      e.cool = Math.round((pt.fireEvery / g.rp.fire) * g.rng.range(0.7, 1.3));
+      e.cool = Math.round((pt.fireEvery / (g.rp.fire * g.urgeFire)) * g.rng.range(0.7, 1.3));
       if (e.y < g.player.y - 30) g.aimDart(e.x, e.y + 4);
     }
     if (e.x < -14 || e.x > FB_W + 14 || e.y < TUNING.hudTop - 10 || e.y > FB_H + 14) {

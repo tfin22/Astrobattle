@@ -26,6 +26,17 @@ export class ShieldWall implements Mission {
   anim = 0;
   diveT = 0;
   blockWidth = 0;
+  /** Frames left with the field switched off (it drops while you fire). */
+  downT = 0;
+  readonly thins = true;
+
+  get fieldUp(): boolean {
+    return this.downT === 0;
+  }
+
+  onPlayerFire(): void {
+    this.downT = SHIELD_WALL.pattern.fieldDownFrames;
+  }
 
   init(g: Game): void {
     const d = SHIELD_WALL;
@@ -97,6 +108,7 @@ export class ShieldWall implements Mission {
   }
 
   update(g: Game): void {
+    if (this.downT > 0) this.downT--;
     this.march(g);
     this.peelOff(g);
     for (const e of g.enemies) {
@@ -114,19 +126,20 @@ export class ShieldWall implements Mission {
     this.marchT = Math.max(1, Math.round(lerp(TUNING.wallTickFast, TUNING.wallTickSlow, frac) / g.rp.speed));
     const form = this.formation(g);
     const step = TUNING.wallStepX * this.dir;
+    // Bounds come from every surviving fighter's slot, including those out
+    // diving, so a fighter that returns always lands on screen.
     let minX = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
-    for (const e of form) {
-      minX = Math.min(minX, e.x);
-      maxX = Math.max(maxX, e.x);
-      maxY = Math.max(maxY, e.y);
+    for (const e of g.enemies) {
+      if (!e.alive || e.type !== 'drone') continue;
+      minX = Math.min(minX, this.originX + e.hx);
+      maxX = Math.max(maxX, this.originX + e.hx);
+      maxY = Math.max(maxY, this.originY + e.hy);
     }
-    // Divers count too: the block keeps its shape.
-    if (form.length === 0) {
-      this.originX += step;
-      if (this.originX < 4 || this.originX + this.blockWidth > FB_W - 4) this.dir = -this.dir;
-    } else if (minX + step < 8 || maxX + step > FB_W - 8) {
+    // Turn only at the edge we're heading for; then step down.
+    const hitEdge = (this.dir > 0 && maxX + step > FB_W - 8) || (this.dir < 0 && minX + step < 8);
+    if (hitEdge) {
       this.dir = -this.dir;
       if (maxY + TUNING.wallStepDown <= TUNING.wallFloor) this.originY += TUNING.wallStepDown;
     } else {
@@ -148,7 +161,7 @@ export class ShieldWall implements Mission {
       const cur = lowest.get(e.hx);
       if (!cur || e.hy > cur.hy) lowest.set(e.hx, e);
     }
-    const chance = TUNING.wallBombChance * g.rp.fire * (1 + (1 - form.length / Math.max(1, this.total)));
+    const chance = TUNING.wallBombChance * g.rp.fire * g.urgeFire;
     for (const e of lowest.values()) {
       if (g.rng.chance(chance)) g.dropBomb(e.x, e.y + 5);
     }
@@ -156,7 +169,7 @@ export class ShieldWall implements Mission {
 
   private peelOff(g: Game): void {
     if (--this.diveT > 0) return;
-    this.diveT = Math.round((TUNING.wallDiveEvery / g.rp.dive) * g.rng.range(0.7, 1.3));
+    this.diveT = Math.round((TUNING.wallDiveEvery / (g.rp.dive * g.urgeSpeed)) * g.rng.range(0.7, 1.3));
     const diving = g.enemies.filter((e) => e.alive && e.type === 'drone' && e.state !== 'formation').length;
     if (diving >= byRank(SHIELD_WALL.maxDivers, g.level)) return;
     const form = this.formation(g);
@@ -170,7 +183,7 @@ export class ShieldWall implements Mission {
   }
 
   private updateDiver(g: Game, e: Enemy): void {
-    const sp = TUNING.diverSpeed * g.rp.speed;
+    const sp = TUNING.diverSpeed * g.pace;
     switch (e.state) {
       case 'leaving': {
         // Swing out and up in a half loop, then commit.
@@ -192,7 +205,7 @@ export class ShieldWall implements Mission {
         e.vy = sp;
         e.x += e.vx;
         e.y += e.vy;
-        if (e.t % pt.bombEvery === pt.bombEvery >> 1 && g.rng.chance(0.5 * g.rp.fire)) g.dropBomb(e.x, e.y + 5);
+        if (e.t % pt.bombEvery === pt.bombEvery >> 1 && g.rng.chance(0.5 * g.rp.fire * g.urgeFire)) g.dropBomb(e.x, e.y + 5);
         // Diving into the force field blows a big hole and the fighter.
         if (this.fieldNear(e.x, e.y + 4, 3)) {
           this.crater(g, e.x, e.y + 4, pt.craterDiver);
@@ -228,23 +241,25 @@ export class ShieldWall implements Mission {
   }
 
   private fieldNear(x: number, y: number, r: number): boolean {
+    if (!this.fieldUp) return false;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -r; dx <= r; dx++) if (this.fieldAt(x + dx, y + dy)) return true;
     return false;
   }
 
   shotScenery(g: Game, x: number, y: number): boolean {
     if (y < this.fieldTop - 1 || y > this.fieldBottom + 1) return false;
-    if (!this.fieldAt(x, y)) return false;
-    // Your own shot eats a small hole: the price of firing from cover.
-    this.crater(g, x, y, SHIELD_WALL.pattern.craterShot);
-    g.sfx('fizz');
+    // The field drops whenever you fire, so normally your shot is long gone
+    // before it comes back. If it does meet the field, the field stops it.
+    if (!this.fieldUp || !this.fieldAt(x, y)) return false;
+    g.sfx('clink');
     return true;
   }
 
   bulletScenery(g: Game, b: Bullet): boolean {
     const tip = b.y + 2;
     if (tip < this.fieldTop - 1 || tip > this.fieldBottom + 1) return false;
-    if (!this.fieldAt(b.x, tip)) return false;
+    // While the field is down, bombs go straight through: firing has a cost.
+    if (!this.fieldUp || !this.fieldAt(b.x, tip)) return false;
     this.crater(g, b.x, tip, SHIELD_WALL.pattern.craterBomb);
     g.sfx('fizz');
     return true;

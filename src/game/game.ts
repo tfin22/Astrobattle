@@ -60,6 +60,11 @@ export class Game {
   /** Frames left of a full-screen flash, and its colour. */
   flash = 0;
   flashColour = 0;
+  /** Thinning multipliers for this frame (see tuning.thinning). */
+  urgeSpeed = 1;
+  urgeFire = 1;
+  /** Enemy speed multiplier this frame: rank x difficulty x thinning, capped. */
+  pace = 1;
   /** Debug: the player can't die. */
   invincible = false;
   /** Flagship explosion centre. */
@@ -204,6 +209,7 @@ export class Game {
     this.movePlayer(input);
     this.handleFire(input);
     this.moveShot();
+    this.updateUrgency();
     this.mission.update(this);
     if (this.phase !== 'play') return; // the mission may end the phase (flagship)
     this.updateSaucer();
@@ -217,6 +223,20 @@ export class Game {
     this.checkExtraShip();
     if (!this.mission.ownPulse) this.updatePulse();
     if (this.phase === 'play' && this.mission.isClear(this)) this.missionClear();
+  }
+
+  /** The fewer enemies left, the faster and angrier they get. */
+  private updateUrgency(): void {
+    if (!this.mission.thins) {
+      this.urgeSpeed = this.urgeFire = 1;
+      this.pace = Math.min(TUNING.maxEnemyPace, this.rp.speed);
+      return;
+    }
+    const cleared = 1 - clamp(this.mission.remaining(this), 0, 1);
+    const k = cleared * cleared;
+    this.urgeSpeed = 1 + TUNING.thinning.speed * k;
+    this.urgeFire = 1 + TUNING.thinning.fire * k;
+    this.pace = Math.min(TUNING.maxEnemyPace, this.rp.speed * this.urgeSpeed);
   }
 
   private movePlayer(input: FrameInput): void {
@@ -251,6 +271,7 @@ export class Game {
     this.shot.y = p.y - 7;
     this.shot.alive = true;
     this.stats.shotsFired++;
+    this.mission.onPlayerFire?.(this);
     this.sfx('shot');
     this.events.push({ t: 'haptic', id: 'fire' });
   }

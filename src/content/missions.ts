@@ -43,7 +43,9 @@ export const SHIELD_WALL = {
     swingFrames: 36, swingOut: 14, swingRise: 10,
     aimSpread: 18, steer: 0.03, maxDrift: 0.9,
     bombEvery: 50, returnBoost: 1.4,
-    craterShot: 1.3, craterBomb: 2.6, craterDiver: 6,
+    craterBomb: 2.6, craterDiver: 6,
+    /** Frames the field stays off after you fire, so your shot gets out. */
+    fieldDownFrames: 16,
   },
 } satisfies MissionBase & Record<string, unknown>;
 
