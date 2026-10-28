@@ -115,3 +115,38 @@ checked against documentation.
 - **Subtitles** appear in a band under the score in play, and on the title
   cards under VORG's face, whose mouth follows the phonemes (open on vowels,
   half on most consonants, shut on M/B/P/F/V).
+
+## Laser Attack
+
+- 2-3 carriers (3-4 hits each) on separate lanes, each orbited by 4-6
+  escorts. Escorts swoop: break sideways, dive steering gently at you, fly a
+  full vertical loop above your zone (firing a dart as the loop starts),
+  then climb back to their orbit. If their carrier dies they join another,
+  or circle the middle.
+- **Laser fairness.** A carrier stops moving for the whole charge (so the
+  warning is honest); the glow grows at the emitter with a rising tone, and
+  for the last 40% of the charge a dotted line marks exactly where the beam
+  will fall. Charge time is 80 frames at Cadet down to 47 at Admiral and
+  never below 45 (`minLaserCharge`) at any level. Carriers prefer to charge
+  when you're within 40 px of their column. Only 1 (2 from Commander) may
+  charge or fire at once.
+- Hitting a charging carrier cancels the laser (+400) as well as damaging it.
+- If you die, any charging/firing laser stands down so the respawn is fair.
+
+## Swarm (original, replacing the arcade's Galaxian nod)
+
+- **Shape.** A loose cloud: home offsets on a golden-angle spiral with
+  jitter inside an ellipse, so there are no rows or columns. The whole cloud
+  wanders on a slow Lissajous path and each member "breathes" in and out on
+  its own phase.
+- **Dives.** A group of 2-4 *neighbours* in the cloud breaks off together
+  (there is no flagship-and-escort structure), peels out to the side, then
+  weaves down a shared centre line that drifts toward you; alternate members
+  are half a cycle apart so their paths cross. Half the groups split into
+  pairs below the middle of the screen, peeling apart.
+- **Kamikazes** (15-30% of the swarm, a different needle sprite) predict
+  where you'll be (your current velocity x time to reach your height),
+  re-aim a few times in the first half second, then commit to a straight
+  line. A late sidestep makes them miss.
+- Distinct from Galaxian on purpose: no grid formation, no flagship with
+  escorts, no wrap-around single dives, all-new sprites and colours.

@@ -15,6 +15,8 @@ export interface Mission {
   /** Called when the player's shot hits an enemy. True = handled here. */
   onHit?(g: Game, e: Enemy): boolean;
   onKill?(g: Game, e: Enemy): void;
+  /** The player just died: make the restart fair (e.g. stand lasers down). */
+  onPlayerDeath?(g: Game): void;
   isClear(g: Game): boolean;
   /** 0..1, how much of the mission's enemies remain (pulse speed). */
   remaining(g: Game): number;

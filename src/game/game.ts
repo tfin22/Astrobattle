@@ -444,6 +444,7 @@ export class Game {
     this.stats.deaths++;
     this.shot.alive = false;
     this.bullets = [];
+    this.mission.onPlayerDeath?.(this);
     this.explode(p.x, p.y, 40, true);
     this.flash = 6;
     this.flashColour = 0;
@@ -504,7 +505,7 @@ export class Game {
     if (this.missionDef.id === 'flagship') return; // the reactor ends this one
     const bonus = SCORING.missionBonus * (this.level + 1);
     this.addScore(bonus);
-    this.popupText(`BONUS ${bonus}`, FB_W / 2, 150);
+    this.popupText(`BONUS ${bonus}`, FB_W / 2, 176);
     this.shot.alive = false;
     this.bullets = [];
     this.sfx('fanfare');

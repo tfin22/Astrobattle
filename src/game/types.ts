@@ -103,6 +103,7 @@ export type HapticId = 'fire' | 'death' | 'boom' | 'tap';
 
 export type GameEvent =
   | { t: 'sfx'; id: SfxId; dur?: number }
+  | { t: 'sfxStop'; id: SfxId }
   | { t: 'say'; trigger: string; text: string; ph: string; frames: number }
   | { t: 'haptic'; id: HapticId }
   | { t: 'pulse'; beat: number }

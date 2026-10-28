@@ -126,8 +126,21 @@ export class AudioEngine {
         this.buffers.set(key, this.toBuffer(renderSfx(def)));
       }
     }
-    const exclusive = id === 'shot' || id === 'fizz' || id === 'dart' || id === 'enemyShot' || id === 'chip';
+    const exclusive = id === 'shot' || id === 'fizz' || id === 'dart' || id === 'enemyShot' || id === 'chip' || id === 'laserCharge';
     this.play(key, this.sfxBus, exclusive);
+  }
+
+  stop(id: SfxId): void {
+    for (const [key, src] of this.playing) {
+      if (key === id || key.startsWith(id + ':')) {
+        try {
+          src.stop();
+        } catch {
+          /* ignore */
+        }
+        this.playing.delete(key);
+      }
+    }
   }
 
   pulse(beat: number): void {

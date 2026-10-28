@@ -46,8 +46,8 @@ export const LASER_ATTACK = {
   look: 'laserAttack' as LookName,
   intro: 'missionLaserAttack',
   carriers: [2, 2, 3, 3, 3, 3],
-  escortsPerCarrier: [3, 3, 3, 4, 4, 4],
-  carrierHp: [2, 2, 2, 3, 3, 3],
+  escortsPerCarrier: [4, 4, 5, 5, 5, 6],
+  carrierHp: [3, 3, 3, 4, 4, 4],
   /** How many carriers may charge or fire at the same time. */
   maxFiring: [1, 1, 1, 2, 2, 2],
   /** Home heights of the carrier lanes. */
@@ -60,7 +60,7 @@ export const SWARM = {
   name: 'SWARM',
   look: 'swarm' as LookName,
   intro: 'missionSwarm',
-  count: [20, 22, 24, 26, 28, 30],
+  count: [22, 24, 26, 28, 30, 32],
   /** Share of the swarm that are kamikazes. */
   kamikazeShare: [0.15, 0.18, 0.2, 0.24, 0.28, 0.3],
   groupSize: [2, 3, 3, 3, 4, 4],

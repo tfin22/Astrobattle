@@ -136,6 +136,9 @@ export class App {
         case 'sfx':
           if (!quiet) this.audio.sfx(e.id, e.dur);
           break;
+        case 'sfxStop':
+          this.audio.stop(e.id);
+          break;
         case 'say':
           if (!quiet) this.audio.say(e.ph);
           break;
