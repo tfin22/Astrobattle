@@ -4,6 +4,7 @@ import { TUNING } from '../tuning';
 import { FB_W, FB_H } from '../render/framebuffer';
 import { ENEMY_TYPES, type EnemyTypeName } from '../content/enemies';
 import { SCORING } from '../content/scoring';
+import { GAME_TEXT } from '../content/text';
 import { MISSIONS } from '../content/missions';
 import { PEN, col } from '../palette';
 import { rankParams, type RankParams } from './rankParams';
@@ -505,7 +506,7 @@ export class Game {
     if (this.missionDef.id === 'flagship') return; // the reactor ends this one
     const bonus = SCORING.missionBonus * (this.level + 1);
     this.addScore(bonus);
-    this.popupText(`BONUS ${bonus}`, FB_W / 2, 176);
+    this.popupText(`${GAME_TEXT.bonus} ${bonus}`, FB_W / 2, 176);
     this.shot.alive = false;
     this.bullets = [];
     this.sfx('fanfare');

@@ -31,8 +31,8 @@ export class Swarm implements Mission {
     for (let i = 0; i < n; i++) {
       const ring = Math.sqrt((i + 0.5) / n);
       const a = i * 2.399963 + g.rng.range(-0.3, 0.3); // golden-angle spiral
-      const hx = fcos(a) * ring * R * 1.4 + g.rng.range(-3, 3);
-      const hy = fsin(a) * ring * R * 0.85 + g.rng.range(-2, 2);
+      const hx = fcos(a) * ring * R * SWARM.pattern.spreadX + g.rng.range(-3, 3);
+      const hy = fsin(a) * ring * R * SWARM.pattern.spreadY + g.rng.range(-2, 2);
       const type = g.rng.chance(kShare) ? 'kamikaze' : 'swarmer';
       const e = g.spawnEnemy(type, this.cx + hx, this.cy + hy, 'formation');
       e.hx = hx;
@@ -44,15 +44,15 @@ export class Swarm implements Mission {
   }
 
   private home(e: Enemy): { x: number; y: number } {
-    const b = 1 + 0.16 * fsin(this.t * TUNING.swarmBreathe + e.p2);
+    const b = 1 + SWARM.pattern.breathe * fsin(this.t * TUNING.swarmBreathe + e.p2);
     return { x: this.cx + e.hx * b, y: this.cy + e.hy * b };
   }
 
   update(g: Game): void {
     this.t++;
     const drift = TUNING.swarmDriftSpeed * g.rp.speed;
-    this.cx = FB_W / 2 + 30 * fsin(this.t * drift);
-    this.cy = SWARM.cloudY + 16 * fsin(this.t * drift * 1.7 + 1);
+    this.cx = FB_W / 2 + SWARM.pattern.wanderX * fsin(this.t * drift);
+    this.cy = SWARM.cloudY + SWARM.pattern.wanderY * fsin(this.t * drift * 1.7 + 1);
     for (const e of g.enemies) {
       if (!e.alive || (e.type !== 'swarmer' && e.type !== 'kamikaze')) continue;
       e.t++;
@@ -75,7 +75,7 @@ export class Swarm implements Mission {
     const group = [...form].sort((a, b) => Math.hypot(a.hx - seed.hx, a.hy - seed.hy) - Math.hypot(b.hx - seed.hx, b.hy - seed.hy)).slice(0, size);
     const side = seed.hx < 0 ? -1 : 1;
     const gid = this.nextGroup++;
-    const split = g.rng.chance(0.5);
+    const split = g.rng.chance(SWARM.pattern.splitChance);
     group.forEach((e, i) => {
       g.setState(e, 'leaving');
       e.link = gid;
@@ -99,7 +99,7 @@ export class Swarm implements Mission {
         // Peel out to the side in a rising curve.
         e.x += e.p0 * sp * 0.8;
         e.y += -0.6 + e.t * 0.06;
-        if (e.t > 22) {
+        if (e.t > SWARM.pattern.leaveFrames) {
           g.setState(e, 'attacking');
           e.vx = e.x; // remember the dive's centre line
           e.vy = e.y;
@@ -140,18 +140,19 @@ export class Swarm implements Mission {
    */
   private weave(g: Game, e: Enemy, sp: number): void {
     const t = e.t;
+    const pt = SWARM.pattern;
     const lanePhase = (e.p1 % 2) * Math.PI + e.r * 0.4;
-    const amp = 26 + (e.p1 >> 1) * 8;
+    const amp = pt.weaveAmp + (e.p1 >> 1) * pt.weaveLaneAmp;
     // The centre line drifts toward the player as it falls.
-    const centre = e.vx + (g.player.x - e.vx) * Math.min(1, t / 140);
-    let x = centre + amp * fsin(t * 0.05 + lanePhase);
-    if (e.a === 1 && e.y > 150) {
+    const centre = e.vx + (g.player.x - e.vx) * Math.min(1, t / pt.homingFrames);
+    let x = centre + amp * fsin(t * pt.weaveRate + lanePhase);
+    if (e.a === 1 && e.y > pt.splitAtY) {
       const pair = e.p1 < 2 ? -1 : 1;
-      x += pair * Math.min(36, (e.y - 150) * 0.5);
+      x += pair * Math.min(pt.splitMax, (e.y - pt.splitAtY) * 0.5);
     }
     e.x = clamp(x, 4, FB_W - 4);
     e.y += sp * 0.85;
-    if (t % 45 === 20 && e.y < 200 && g.rng.chance(0.5 * g.rp.fire)) g.aimDart(e.x, e.y + 4);
+    if (t % pt.dartEvery === 20 && e.y < 200 && g.rng.chance(0.5 * g.rp.fire)) g.aimDart(e.x, e.y + 4);
   }
 
   /** Aim at where the player will be when we get there. */

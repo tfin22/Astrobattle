@@ -206,3 +206,30 @@ checked against documentation.
   auto-saves after 45 s.
 - **Settings** (`qc.settings`): ships 3-5, hold to fire, stick or d-pad,
   sound, volume, subtitles, CRT, bezel, haptics, and a two-tap reset.
+
+## Juice, display and performance
+
+- **Display layers.** The 204x320 picture is its own small canvas; the
+  browser's compositor scales it (CSS size = integer multiple in device
+  pixels, `image-rendering: pixelated`). A transparent canvas above holds
+  the thumb controls, bezel and debug drawings and is only redrawn when they
+  change. CRT mode adds a tiny bloom canvas (screen-blended, smoothed by the
+  compositor) and a static scanline + vignette layer, with rounded corners.
+  Measured in headless Chromium with the CPU throttled 4x at the busiest
+  moment (flagship exploding over 36 swarmers and 7 bombs at Admiral): 60
+  fps without CRT, ~56 with; our own work is ~1.4 ms a frame.
+- **Attract loop**: title (rainbow per-scanline logo) -> VORG's face
+  speaking a line -> high scores -> a demo (the AI pilot plays each mission
+  for 8 s from a fixed seed, invincible, silent) -> score advance table.
+  Any tap inserts a coin. Speech can only start after the first tap on
+  phones, so the attract VORG page shows his line as text until then.
+- **PWA**: the build writes `manifest.webmanifest` (fullscreen, portrait),
+  `sw.js` (cache-first, refreshed in the background) and 192/512 icons drawn
+  from VORG's face sprite. These only matter when the game is served over
+  https; `index.html` alone is the whole game.
+- **Haptics**: 8 ms tick per shot, a firm triple pulse on death, a long
+  rumble for the flagship. Off in settings, and silently absent on iOS.
+- **Wake lock** while playing (re-acquired after the tab comes back).
+- **Patterns as data**: each mission's flight-path numbers (swing sizes,
+  loop turn rates, weave widths, breathing, spiral growth) live in
+  `content/missions.ts` under `pattern`; speeds and rates in `tuning.ts`.

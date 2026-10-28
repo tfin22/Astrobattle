@@ -73,14 +73,14 @@ export class Flagship implements Mission {
     }
     if (--this.bombT <= 0) {
       this.bombT = Math.round((TUNING.flagshipBombEvery / g.rp.fire) * g.rng.range(0.6, 1.4));
-      g.dropBomb(this.x + g.rng.range(-26, 26), this.hullTop + this.rows * TUNING.hullBlockH + 2);
+      g.dropBomb(this.x + g.rng.range(-FLAGSHIP_MISSION.pattern.bombSpread, FLAGSHIP_MISSION.pattern.bombSpread), this.hullTop + this.rows * TUNING.hullBlockH + 2);
     }
     const fighters = g.enemies.filter((e) => e.alive && e.type === 'fighter');
     if (--this.fighterT <= 0) {
       this.fighterT = Math.round((TUNING.flagshipFighterEvery / g.rp.dive) * g.rng.range(0.7, 1.3));
       if (fighters.length < byRank(FLAGSHIP_MISSION.maxFighters, g.level)) {
         const side = g.rng.sign();
-        const f = g.spawnEnemy('fighter', this.x + side * 24, this.y + 4, 'leaving');
+        const f = g.spawnEnemy('fighter', this.x + side * FLAGSHIP_MISSION.pattern.launchOffset, this.y + 4, 'leaving');
         f.p0 = side;
       }
     }
@@ -92,21 +92,22 @@ export class Flagship implements Mission {
 
   private updateFighter(g: Game, f: Enemy): void {
     const sp = TUNING.escortSpeed * g.rp.speed;
+    const pt = FLAGSHIP_MISSION.pattern;
     switch (f.state) {
       case 'leaving':
         f.x += f.p0 * sp;
         f.y += sp * 0.4;
-        if (f.t > 20) {
+        if (f.t > pt.leaveFrames) {
           g.setState(f, 'attacking');
           f.vx = f.x;
         }
         break;
       case 'attacking': {
         // Weave down toward the player.
-        f.vx += Math.sign(g.player.x - f.vx) * 0.5;
-        f.x = clamp(f.vx + 22 * fsin(f.t * 0.06 * f.p0), 4, FB_W - 4);
+        f.vx += Math.sign(g.player.x - f.vx) * pt.homing;
+        f.x = clamp(f.vx + pt.weaveAmp * fsin(f.t * pt.weaveRate * f.p0), 4, FB_W - 4);
         f.y += sp * 0.8;
-        if (f.t % 50 === 30 && f.y < 200) g.aimDart(f.x, f.y + 3);
+        if (f.t % pt.dartEvery === 30 && f.y < 200) g.aimDart(f.x, f.y + 3);
         if (f.y > FB_H + 8) f.alive = false; // gone back to the ship
         break;
       }

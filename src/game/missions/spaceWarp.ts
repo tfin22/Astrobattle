@@ -56,14 +56,15 @@ export class SpaceWarp implements Mission {
 
   private move(g: Game, e: Enemy): void {
     const sp = g.rp.speed;
+    const pt = SPACE_WARP.pattern;
     // Spins fast near the centre, slows as it grows; grows faster as it goes.
-    e.a += TUNING.warpSpin * sp * e.p0 * (1 + 14 / (e.r + 8));
-    e.r += TUNING.warpGrowth * sp * (0.35 + e.r / 70);
+    e.a += TUNING.warpSpin * sp * e.p0 * (1 + pt.spinBoost / (e.r + 8));
+    e.r += TUNING.warpGrowth * sp * (pt.growthBase + e.r / pt.growthRamp);
     e.x = this.cx + fcos(e.a) * e.r;
-    e.y = this.cy + fsin(e.a) * e.r * 0.92;
-    e.stage = e.r < 22 ? 0 : e.r < 56 ? 1 : 2;
+    e.y = this.cy + fsin(e.a) * e.r * pt.squash;
+    e.stage = e.r < pt.mediumAt ? 0 : e.r < pt.largeAt ? 1 : 2;
     if (e.r > TUNING.warpFireRadius && --e.cool <= 0) {
-      e.cool = Math.round((100 / g.rp.fire) * g.rng.range(0.7, 1.3));
+      e.cool = Math.round((pt.fireEvery / g.rp.fire) * g.rng.range(0.7, 1.3));
       if (e.y < g.player.y - 30) g.aimDart(e.x, e.y + 4);
     }
     if (e.x < -14 || e.x > FB_W + 14 || e.y < TUNING.hudTop - 10 || e.y > FB_H + 14) {

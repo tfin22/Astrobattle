@@ -174,26 +174,28 @@ export class ShieldWall implements Mission {
     switch (e.state) {
       case 'leaving': {
         // Swing out and up in a half loop, then commit.
-        const k = e.t / 36;
-        e.x = e.p1 + e.p0 * 14 * Math.min(1, k * 1.4);
-        e.y = e.p2 - 10 * (k < 0.5 ? k * 2 : 2 - k * 2);
-        if (e.t >= 36) {
+        const pt = SHIELD_WALL.pattern;
+        const k = e.t / pt.swingFrames;
+        e.x = e.p1 + e.p0 * pt.swingOut * Math.min(1, k * 1.4);
+        e.y = e.p2 - pt.swingRise * (k < 0.5 ? k * 2 : 2 - k * 2);
+        if (e.t >= pt.swingFrames) {
           g.setState(e, 'attacking');
           // Aim for the field above the player, or the player through a gap.
-          e.p1 = clamp(g.player.x + g.rng.range(-18, 18), 12, FB_W - 12);
+          e.p1 = clamp(g.player.x + g.rng.range(-pt.aimSpread, pt.aimSpread), 12, FB_W - 12);
         }
         break;
       }
       case 'attacking': {
         const dx = e.p1 - e.x;
-        e.vx = clamp(dx * 0.03, -0.9, 0.9);
+        const pt = SHIELD_WALL.pattern;
+        e.vx = clamp(dx * pt.steer, -pt.maxDrift, pt.maxDrift);
         e.vy = sp;
         e.x += e.vx;
         e.y += e.vy;
-        if (e.t % 50 === 25 && g.rng.chance(0.5 * g.rp.fire)) g.dropBomb(e.x, e.y + 5);
+        if (e.t % pt.bombEvery === pt.bombEvery >> 1 && g.rng.chance(0.5 * g.rp.fire)) g.dropBomb(e.x, e.y + 5);
         // Diving into the force field blows a big hole and the fighter.
         if (this.fieldNear(e.x, e.y + 4, 3)) {
-          this.crater(g, e.x, e.y + 4, 6);
+          this.crater(g, e.x, e.y + 4, pt.craterDiver);
           g.sfx('fizz');
           g.killEnemy(e, false);
           return;
@@ -215,8 +217,8 @@ export class ShieldWall implements Mission {
           e.y = ty;
           g.setState(e, 'formation');
         } else {
-          e.x += (dx / d) * sp * 1.4;
-          e.y += (dy / d) * sp * 1.4;
+          e.x += (dx / d) * sp * SHIELD_WALL.pattern.returnBoost;
+          e.y += (dy / d) * sp * SHIELD_WALL.pattern.returnBoost;
         }
         break;
       }
@@ -234,7 +236,7 @@ export class ShieldWall implements Mission {
     if (y < this.fieldTop - 1 || y > this.fieldBottom + 1) return false;
     if (!this.fieldAt(x, y)) return false;
     // Your own shot eats a small hole: the price of firing from cover.
-    this.crater(g, x, y, 1.3);
+    this.crater(g, x, y, SHIELD_WALL.pattern.craterShot);
     g.sfx('fizz');
     return true;
   }
@@ -243,7 +245,7 @@ export class ShieldWall implements Mission {
     const tip = b.y + 2;
     if (tip < this.fieldTop - 1 || tip > this.fieldBottom + 1) return false;
     if (!this.fieldAt(b.x, tip)) return false;
-    this.crater(g, b.x, tip, 2.6);
+    this.crater(g, b.x, tip, SHIELD_WALL.pattern.craterBomb);
     g.sfx('fizz');
     return true;
   }

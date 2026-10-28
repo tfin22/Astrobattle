@@ -34,6 +34,25 @@ const hook = {
     for (let i = 0; i < n; i++) g.step({ mx: 0, my: 0, fire: false, fireHeld: false });
     return g.phase;
   },
+  /**
+   * The busiest moment: the flagship exploding with a full swarm on screen
+   * at Admiral rank. Returns the game for further poking.
+   */
+  stress() {
+    app.startGame('arcade', 4, 5);
+    const g = app.game!;
+    g.setPhase('play');
+    g.invincible = true;
+    const m = g.mission as unknown as { x: number; y: number };
+    g.reactorDestroyed(m.x, m.y + 4);
+    for (let i = 0; i < 36; i++) {
+      const e = g.spawnEnemy(i % 4 ? 'swarmer' : 'kamikaze', 20 + ((i * 37) % 164), 90 + ((i * 23) % 110), 'attacking');
+      e.vx = 0;
+      e.vy = 0.2;
+    }
+    for (let i = 0; i < 7; i++) g.dropBomb(30 + i * 22, 140);
+    return g.phase;
+  },
   screen(s: string) {
     app.setScreen(s as never);
   },

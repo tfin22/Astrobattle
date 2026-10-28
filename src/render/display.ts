@@ -3,35 +3,61 @@ import { computeLayout, type Layout } from './layout';
 import type { InputManager } from '../platform/input';
 
 /**
- * Puts the framebuffer on the real screen: integer-scaled, nearest
- * neighbour, letterboxed, with the thumb controls drawn underneath.
+ * Puts the framebuffer on the real screen. The 204x320 picture lives in its
+ * own small canvas that the browser's compositor scales up (integer-sized,
+ * `image-rendering: pixelated`), which costs almost nothing on a phone. A
+ * transparent canvas on top holds the thumb controls, bezel and debug
+ * drawings, and is only redrawn when something on it changes.
  */
 export class Display {
+  /** The UI layer (controls, bezel, debug). Receives all touches. */
   readonly ctx: CanvasRenderingContext2D;
+  /** The arcade picture, 204x320. */
   readonly off: HTMLCanvasElement;
   private offCtx: CanvasRenderingContext2D;
   private image: ImageData;
   private buf32: Uint32Array;
   private glow: HTMLCanvasElement;
   private glowCtx: CanvasRenderingContext2D;
-  private scanPattern: CanvasPattern | null = null;
+  private crtLayer: HTMLCanvasElement;
   layout!: Layout;
   crt = false;
   bezel = false;
   touch = false;
+  /** Set when something outside the controls (debug) draws on the UI layer. */
+  uiDirty = true;
+  private uiKey = '';
+  private panel: HTMLCanvasElement | null = null;
 
   constructor(readonly canvas: HTMLCanvasElement) {
-    this.ctx = canvas.getContext('2d', { alpha: false })!;
+    this.ctx = canvas.getContext('2d')!;
+    const layer = (c: HTMLCanvasElement, z: number) => {
+      c.style.position = 'fixed';
+      c.style.zIndex = String(z);
+      c.style.pointerEvents = 'none';
+      canvas.parentElement!.insertBefore(c, canvas);
+    };
     this.off = document.createElement('canvas');
     this.off.width = FB_W;
     this.off.height = FB_H;
-    this.offCtx = this.off.getContext('2d')!;
+    this.off.style.imageRendering = 'pixelated';
+    layer(this.off, 0);
+    this.offCtx = this.off.getContext('2d', { alpha: false })!;
     this.image = this.offCtx.createImageData(FB_W, FB_H);
     this.buf32 = new Uint32Array(this.image.data.buffer);
+    // CRT bloom: a tiny copy, smoothed by the compositor and screened on top.
     this.glow = document.createElement('canvas');
     this.glow.width = FB_W / 4;
     this.glow.height = FB_H / 4;
+    this.glow.style.mixBlendMode = 'screen';
+    this.glow.style.imageRendering = 'auto';
+    this.glow.style.opacity = '0.35';
+    layer(this.glow, 1);
     this.glowCtx = this.glow.getContext('2d')!;
+    // CRT scanlines and vignette: a static layer.
+    this.crtLayer = document.createElement('canvas');
+    layer(this.crtLayer, 2);
+    canvas.style.zIndex = '3';
     this.resize();
   }
 
@@ -39,61 +65,65 @@ export class Display {
     const cssW = window.innerWidth;
     const cssH = window.innerHeight;
     const dpr = Math.min(window.devicePixelRatio || 1, 4);
-    this.layout = computeLayout(cssW, cssH, dpr, this.touch);
-    this.canvas.width = this.layout.devW;
-    this.canvas.height = this.layout.devH;
+    const l = (this.layout = computeLayout(cssW, cssH, dpr, this.touch));
+    this.canvas.width = l.devW;
+    this.canvas.height = l.devH;
     this.canvas.style.width = cssW + 'px';
     this.canvas.style.height = cssH + 'px';
-    this.scanPattern = null;
+    for (const c of [this.off, this.glow, this.crtLayer]) {
+      c.style.left = l.play.x / dpr + 'px';
+      c.style.top = l.play.y / dpr + 'px';
+      c.style.width = l.play.w / dpr + 'px';
+      c.style.height = l.play.h / dpr + 'px';
+    }
+    this.buildCrtLayer();
+    this.panel = null;
+    this.uiDirty = true;
+  }
+
+  private buildCrtLayer(): void {
+    const l = this.layout;
+    const c = this.crtLayer;
+    c.width = l.play.w;
+    c.height = l.play.h;
+    const x = c.getContext('2d')!;
+    x.clearRect(0, 0, c.width, c.height);
+    const step = Math.max(2, l.scale);
+    const dark = Math.max(1, Math.floor(step / 3));
+    x.fillStyle = 'rgba(0,0,0,0.38)';
+    for (let y = 0; y < l.play.h; y += step) x.fillRect(0, Math.round(y + step - dark), l.play.w, dark);
+    const g = x.createRadialGradient(l.play.w / 2, l.play.h / 2, l.play.h * 0.35, l.play.w / 2, l.play.h / 2, l.play.h * 0.62);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,0.5)');
+    x.fillStyle = g;
+    x.fillRect(0, 0, l.play.w, l.play.h);
   }
 
   present(fb: Framebuffer, input: InputManager | null, showControls: boolean): void {
-    const { ctx, layout: l } = this;
     fb.toRGBA(this.buf32);
     this.offCtx.putImageData(this.image, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, l.devW, l.devH);
-    if (this.bezel) this.drawBezel();
-    ctx.drawImage(this.off, l.play.x, l.play.y, l.play.w, l.play.h);
-    if (this.crt) this.drawCrt();
-    if (l.controls.h > 0 && input) this.drawControls(input, showControls);
-  }
-
-  private drawCrt(): void {
-    const { ctx, layout: l } = this;
-    // Bloom: a blurred, brightened copy added on top.
-    this.glowCtx.imageSmoothingEnabled = true;
-    this.glowCtx.clearRect(0, 0, this.glow.width, this.glow.height);
-    this.glowCtx.drawImage(this.off, 0, 0, this.glow.width, this.glow.height);
-    ctx.save();
-    ctx.imageSmoothingEnabled = true;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = 0.22;
-    ctx.drawImage(this.glow, l.play.x, l.play.y, l.play.w, l.play.h);
-    ctx.restore();
-    // Scanlines: one dark line per arcade row.
-    if (!this.scanPattern) {
-      const h = Math.max(2, Math.round(l.scale));
-      const p = document.createElement('canvas');
-      p.width = 1;
-      p.height = h;
-      const pc = p.getContext('2d')!;
-      pc.fillStyle = 'rgba(0,0,0,0.38)';
-      pc.fillRect(0, h - Math.max(1, Math.floor(h / 3)), 1, Math.max(1, Math.floor(h / 3)));
-      this.scanPattern = ctx.createPattern(p, 'repeat');
+    const crt = this.crt ? '' : 'none';
+    if (this.glow.style.display !== crt) {
+      this.glow.style.display = crt;
+      this.crtLayer.style.display = crt;
+      this.off.style.borderRadius = this.crt ? '3%' : '0';
     }
-    ctx.save();
-    ctx.translate(l.play.x, l.play.y);
-    ctx.fillStyle = this.scanPattern!;
-    ctx.fillRect(0, 0, l.play.w, l.play.h);
-    // A hint of curvature: darker, rounded corners.
-    const g = ctx.createRadialGradient(l.play.w / 2, l.play.h / 2, l.play.h * 0.35, l.play.w / 2, l.play.h / 2, l.play.h * 0.62);
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, 'rgba(0,0,0,0.5)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, l.play.w, l.play.h);
-    ctx.restore();
+    if (this.crt) {
+      this.glowCtx.imageSmoothingEnabled = true;
+      this.glowCtx.drawImage(this.off, 0, 0, this.glow.width, this.glow.height);
+    }
+    // The UI layer: only redraw when its contents change.
+    const s = input?.stick;
+    const key = input
+      ? `${s!.active ? 1 : 0}${Math.round(s!.ox)},${Math.round(s!.oy)},${Math.round(s!.kx)},${Math.round(s!.ky)}|${input.firePressedVisual ? 1 : 0}|${input.dpadMode ? 1 : 0}|${showControls ? 1 : 0}|${this.bezel ? 1 : 0}`
+      : 'none';
+    if (!this.uiDirty && key === this.uiKey) return;
+    this.uiKey = key;
+    this.uiDirty = false;
+    const { ctx, layout: l } = this;
+    ctx.clearRect(0, 0, l.devW, l.devH);
+    if (this.bezel) this.drawBezel();
+    if (l.controls.h > 0 && input) this.drawControls(input, showControls);
   }
 
   private drawBezel(): void {
@@ -109,6 +139,7 @@ export class Display {
     grad.addColorStop(1, '#120a1e');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, l.devW, l.play.y + l.play.h);
+    ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
     const t = Math.max(2, Math.round(l.dpr * 2));
     ctx.fillStyle = '#e0306a';
     ctx.fillRect(l.play.x - t * 2, l.play.y, t, l.play.h);
@@ -137,14 +168,22 @@ export class Display {
     const { ctx, layout: l } = this;
     const c = l.controls;
     const d = l.dpr;
-    // The control panel.
-    const g = ctx.createLinearGradient(0, c.y, 0, c.y + c.h);
-    g.addColorStop(0, '#16101f');
-    g.addColorStop(1, '#07050b');
-    ctx.fillStyle = g;
-    ctx.fillRect(c.x, c.y, c.w, c.h);
-    ctx.fillStyle = '#e0306a';
-    ctx.fillRect(c.x, c.y, c.w, Math.max(1, Math.round(d * 1.5)));
+    // The control panel background, cached.
+    if (!this.panel) {
+      const p = document.createElement('canvas');
+      p.width = c.w;
+      p.height = c.h;
+      const x = p.getContext('2d')!;
+      const g = x.createLinearGradient(0, 0, 0, c.h);
+      g.addColorStop(0, '#16101f');
+      g.addColorStop(1, '#07050b');
+      x.fillStyle = g;
+      x.fillRect(0, 0, c.w, c.h);
+      x.fillStyle = '#e0306a';
+      x.fillRect(0, 0, c.w, Math.max(1, Math.round(d * 1.5)));
+      this.panel = p;
+    }
+    ctx.drawImage(this.panel, c.x, c.y);
     if (!show) return;
 
     // Stick (or d-pad).

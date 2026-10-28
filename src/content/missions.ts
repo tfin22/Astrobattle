@@ -38,6 +38,13 @@ export const SHIELD_WALL = {
   field: { x0: 6, x1: 198, apexY: 246, footY: 296, thickness: 5 },
   /** Max fighters peeled off and diving at once, per rank. */
   maxDivers: [1, 2, 2, 3, 3, 4],
+  /** How a diver peels off and attacks. */
+  pattern: {
+    swingFrames: 36, swingOut: 14, swingRise: 10,
+    aimSpread: 18, steer: 0.03, maxDrift: 0.9,
+    bombEvery: 50, returnBoost: 1.4,
+    craterShot: 1.3, craterBomb: 2.6, craterDiver: 6,
+  },
 } satisfies MissionBase & Record<string, unknown>;
 
 export const LASER_ATTACK = {
@@ -53,6 +60,14 @@ export const LASER_ATTACK = {
   /** Home heights of the carrier lanes. */
   lanes: [62, 92, 77],
   maxSwooping: [1, 2, 2, 3, 3, 3],
+  /** Carrier drift and the escorts' swoop-and-loop. */
+  pattern: {
+    edge: 22, bob: 3, bobRate: 0.03, chargeWhenWithin: 40,
+    firstCharge: 100, chargeStagger: 80,
+    orbitRate: 0.035, orbitRX: 24, orbitRY: 11,
+    breakFrames: 18, steer: 0.03, loopAtY: 150, loopJitter: 20, loopTurn: 0.085,
+    dartChance: 0.006, returnBoost: 1.2,
+  },
 } satisfies MissionBase & Record<string, unknown>;
 
 export const SWARM = {
@@ -67,6 +82,12 @@ export const SWARM = {
   maxDiving: [3, 4, 5, 6, 7, 8],
   cloudRadius: 34,
   cloudY: 92,
+  /** The cloud's wander and breathing, and the weaving dives. */
+  pattern: {
+    spreadX: 1.4, spreadY: 0.85, breathe: 0.16, wanderX: 30, wanderY: 16,
+    leaveFrames: 22, weaveAmp: 26, weaveLaneAmp: 8, weaveRate: 0.05,
+    homingFrames: 140, splitAtY: 150, splitMax: 36, splitChance: 0.5, dartEvery: 45,
+  },
 } satisfies MissionBase & Record<string, unknown>;
 
 export const SPACE_WARP = {
@@ -79,6 +100,11 @@ export const SPACE_WARP = {
   /** Spin direction alternates by spawn; true = both ways from this rank. */
   bothWaysFromRank: 2,
   vortexRadius: 30,
+  /** The spiral out of the vortex. */
+  pattern: {
+    spinBoost: 14, growthBase: 0.35, growthRamp: 70, squash: 0.92,
+    mediumAt: 22, largeAt: 56, fireEvery: 100,
+  },
 } satisfies MissionBase & Record<string, unknown>;
 
 export const FLAGSHIP_MISSION = {
@@ -89,6 +115,11 @@ export const FLAGSHIP_MISSION = {
   maxFighters: [2, 2, 3, 3, 4, 4],
   /** Reactor span either side of the flagship centre (px). */
   reactorHalfW: 5,
+  /** Bombing and the launched fighters' weave. */
+  pattern: {
+    bombSpread: 26, launchOffset: 24, leaveFrames: 20,
+    weaveAmp: 22, weaveRate: 0.06, homing: 0.5, dartEvery: 50,
+  },
 } satisfies MissionBase & Record<string, unknown>;
 
 export const MISSIONS = [SHIELD_WALL, LASER_ATTACK, SWARM, SPACE_WARP, FLAGSHIP_MISSION] as const;

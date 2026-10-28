@@ -529,6 +529,10 @@ export class App {
     this.lastLook = look;
     buildLineMap(fb.lineMap, look, this.frame, ov);
     this.debug.drawInFramebuffer(fb);
+    if (this.debug.visible || this.debug.justClosed) {
+      this.display.uiDirty = true;
+      this.debug.justClosed = false;
+    }
     this.display.present(fb, this.input, true);
     this.debug.drawOnScreen(this.display);
   }

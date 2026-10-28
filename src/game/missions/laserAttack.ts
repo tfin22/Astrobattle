@@ -1,6 +1,7 @@
 import { TUNING } from '../../tuning';
 import { LASER_ATTACK, byRank } from '../../content/missions';
 import { SCORING } from '../../content/scoring';
+import { GAME_TEXT } from '../../content/text';
 import { FB_W, FB_H } from '../../render/framebuffer';
 import { clamp, fatan2, fcos, fsin, PI, TAU } from '../../core/fmath';
 import type { Mission } from '../mission';
@@ -35,7 +36,7 @@ export class LaserAttack implements Mission {
       c.hp = byRank(d.carrierHp, g.level);
       c.vx = (i % 2 ? -1 : 1) * TUNING.carrierSpeed * g.rp.speed;
       c.hy = c.y;
-      c.cool = 100 + i * 80;
+      c.cool = d.pattern.firstCharge + i * d.pattern.chargeStagger;
       for (let j = 0; j < per; j++) {
         const e = g.spawnEnemy('escort', x, c.y, 'formation');
         e.link = c.id;
@@ -66,14 +67,15 @@ export class LaserAttack implements Mission {
     const active = this.carriers(g).filter((e) => e.state === 'charging' || e.state === 'firing').length;
     switch (c.state) {
       case 'drift': {
+        const pt = LASER_ATTACK.pattern;
         c.x += c.vx;
-        if (c.x < 22 || c.x > FB_W - 22) {
+        if (c.x < pt.edge || c.x > FB_W - pt.edge) {
           c.vx = -c.vx;
-          c.x = clamp(c.x, 22, FB_W - 22);
+          c.x = clamp(c.x, pt.edge, FB_W - pt.edge);
         }
-        c.y = c.hy + 3 * fsin(c.t * 0.03);
+        c.y = c.hy + pt.bob * fsin(c.t * pt.bobRate);
         c.cool--;
-        const near = Math.abs(c.x - g.player.x) < 40;
+        const near = Math.abs(c.x - g.player.x) < pt.chargeWhenWithin;
         const ready = c.cool <= 0 && active < byRank(LASER_ATTACK.maxFiring, g.level);
         if (ready && (near || c.cool < -150 || g.rng.chance(0.004))) {
           g.setState(c, 'charging');
@@ -118,10 +120,11 @@ export class LaserAttack implements Mission {
 
   private updateEscort(g: Game, e: Enemy): void {
     const sp = TUNING.escortSpeed * g.rp.speed;
+    const pt = LASER_ATTACK.pattern;
     const home = this.homeOf(g, e);
     switch (e.state) {
       case 'formation':
-        e.a += 0.035;
+        e.a += pt.orbitRate;
         e.x = home.x;
         e.y = home.y;
         break;
@@ -129,7 +132,7 @@ export class LaserAttack implements Mission {
         // Break out of the orbit sideways and dip.
         e.x += e.p1 * sp * 0.9;
         e.y += sp * 0.5;
-        if (e.t > 18) {
+        if (e.t > pt.breakFrames) {
           g.setState(e, 'attacking');
           e.r = PI / 2 - e.p1 * 0.4; // heading, radians (pi/2 = straight down)
           e.p0 = 0; // loop progress
@@ -141,15 +144,15 @@ export class LaserAttack implements Mission {
         if (e.p0 === 0) {
           // Dive, steering gently toward the player.
           const want = clamp(fatan2(p.y - e.y, p.x - e.x), 0.4, PI - 0.4);
-          e.r += clamp(want - e.r, -0.03, 0.03);
-          if (e.y > 150 + e.p2) {
+          e.r += clamp(want - e.r, -pt.steer, pt.steer);
+          if (e.y > pt.loopAtY + e.p2) {
             e.p0 = 0.0001; // start the loop
             e.p1 = e.x < p.x ? -1 : 1; // loop away from the player's side
             g.aimDart(e.x, e.y + 3);
           }
         } else {
           // The loop: turn a full circle, then climb home.
-          const turn = 0.085 * e.p1;
+          const turn = pt.loopTurn * e.p1;
           e.r += turn;
           e.p0 += Math.abs(turn);
           if (e.p0 >= TAU) {
@@ -159,19 +162,19 @@ export class LaserAttack implements Mission {
         e.x += fcos(e.r) * sp;
         e.y += fsin(e.r) * sp;
         e.x = clamp(e.x, 4, FB_W - 4);
-        if (g.rng.chance(0.006 * g.rp.fire)) g.aimDart(e.x, e.y + 3);
+        if (g.rng.chance(pt.dartChance * g.rp.fire)) g.aimDart(e.x, e.y + 3);
         break;
       }
       case 'returning': {
-        e.a += 0.035;
+        e.a += pt.orbitRate;
         const dx = home.x - e.x;
         const dy = home.y - e.y;
         const d = Math.hypot(dx, dy);
         if (d < sp * 1.5) {
           g.setState(e, 'formation');
         } else {
-          e.x += (dx / d) * sp * 1.2;
-          e.y += (dy / d) * sp * 1.2;
+          e.x += (dx / d) * sp * pt.returnBoost;
+          e.y += (dy / d) * sp * pt.returnBoost;
         }
         break;
       }
@@ -189,7 +192,8 @@ export class LaserAttack implements Mission {
     }
     const cx = c ? c.x : this.cx;
     const cy = c ? c.y : this.cy;
-    return { x: cx + fcos(e.a) * 24, y: cy + fsin(e.a) * 11 + 2 };
+    const pt = LASER_ATTACK.pattern;
+    return { x: cx + fcos(e.a) * pt.orbitRX, y: cy + fsin(e.a) * pt.orbitRY + 2 };
   }
 
   private swoop(g: Game): void {
@@ -202,7 +206,7 @@ export class LaserAttack implements Mission {
     const e = g.rng.pick(form);
     g.setState(e, 'leaving');
     e.p1 = e.x < FB_W / 2 ? -1 : 1;
-    e.p2 = g.rng.range(-20, 20); // vary where the loop happens
+    e.p2 = g.rng.range(-LASER_ATTACK.pattern.loopJitter, LASER_ATTACK.pattern.loopJitter); // vary where the loop happens
   }
 
   onHit(g: Game, e: Enemy): boolean {
@@ -213,7 +217,7 @@ export class LaserAttack implements Mission {
       e.cool = Math.round(TUNING.laserCooldown / g.rp.fire);
       g.events.push({ t: 'sfxStop', id: 'laserCharge' });
       g.addScore(SCORING.carrierCancelBonus);
-      g.popupText(`CANCEL ${SCORING.carrierCancelBonus}`, e.x, e.y - 10);
+      g.popupText(`${GAME_TEXT.cancel} ${SCORING.carrierCancelBonus}`, e.x, e.y - 10);
     }
     g.damageEnemy(e);
     return true;

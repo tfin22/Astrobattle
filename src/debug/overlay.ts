@@ -20,6 +20,8 @@ export class DebugOverlay {
   spriteViewer = false;
   spritePage = 0;
   frozen = false;
+  /** Ask for one more clean redraw of the UI layer after closing. */
+  justClosed = false;
   private panel: HTMLDivElement | null = null;
   private info: HTMLDivElement | null = null;
 
@@ -107,6 +109,7 @@ export class DebugOverlay {
   }
 
   private close(): void {
+    this.justClosed = true;
     if (this.panel) this.panel.style.display = 'none';
     this.spriteViewer = false;
     this.frozen = false;
