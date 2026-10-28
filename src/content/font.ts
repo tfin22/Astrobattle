@@ -60,6 +60,8 @@ export const BIG: Glyphs = {
   '<': ['...XX', '..XXX', '.XXXX', 'XXXXX', '.XXXX', '..XXX', '...XX'],
   '>': ['XX...', 'XXX..', 'XXXX.', 'XXXXX', 'XXXX.', 'XXX..', 'XX...'],
   '_': ['.......', '.......', '.......', '.......', '.......', '.......', 'XXXXXXX'],
+  '\u25b2': ['.......', '...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.......', '.......'], // up
+  '\u25bc': ['.......', '.......', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...', '.......'], // down
 };
 
 export const SMALL: Glyphs = {

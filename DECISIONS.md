@@ -185,3 +185,24 @@ checked against documentation.
   haptic rumble. Then the promotion card and the next loop.
 - **Photosensitivity**: the screen flashes only a handful of times, softly
   (grey, dark red, dark orange, dim yellow), never strobing.
+
+## The loop, modes and scores
+
+- **Flow**: title card (mission name, the next rank to earn, a VORG line
+  with his face; FIRE skips after 2/3 s) -> mission -> "MISSION COMPLETE" +
+  bonus (500 x level) -> next card. The Flagship's reactor -> explosion ->
+  "PROMOTED" card -> Shield Wall again, one rank up.
+- **Extra ships**: at 10,000 then every 30,000 (not in practice or demo).
+- **Free play**: when the last ship goes, CONTINUE? counts down 10 s; FIRE
+  continues from the start of the current mission with the score reset to
+  zero. A game that has continued is never eligible for the table; one
+  that ends without continuing is, like arcade.
+- **Practice**: any mission at any rank already reached (stored in
+  `qc.progress`), one mission only, nothing saved.
+- **High scores**: top 10 in `qc.scores` (versioned `{ v: 1, data }`), each
+  with initials and the rank reached. Ties go below the existing entry.
+  Initials: stick up/down cycles A-Z and . - ! * space, FIRE confirms each
+  letter, left goes back; tapping above/below a letter also works. It
+  auto-saves after 45 s.
+- **Settings** (`qc.settings`): ships 3-5, hold to fire, stick or d-pad,
+  sound, volume, subtitles, CRT, bezel, haptics, and a two-tap reset.

@@ -38,7 +38,7 @@ export class DebugOverlay {
     }
     const p = document.createElement('div');
     p.style.cssText =
-      'position:fixed;left:4px;top:4px;z-index:10;background:rgba(10,0,20,0.86);color:#9ef;font:11px monospace;padding:6px;border:1px solid #e0306a;max-width:280px;';
+      'position:fixed;left:4px;bottom:4px;z-index:10;background:rgba(10,0,20,0.86);color:#9ef;font:11px monospace;padding:6px;border:1px solid #e0306a;max-width:280px;';
     const info = document.createElement('div');
     info.style.cssText = 'white-space:pre;margin-bottom:4px;color:#fd6';
     p.appendChild(info);
@@ -160,7 +160,7 @@ export class DebugOverlay {
     const s = l.scale;
     ctx.save();
     ctx.lineWidth = Math.max(1, l.dpr);
-    ctx.font = `${Math.round(9 * l.dpr)}px monospace`;
+    ctx.font = `${Math.round(7 * l.dpr)}px monospace`;
     ctx.textAlign = 'center';
     for (const e of g.enemies) {
       if (!e.alive) continue;

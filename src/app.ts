@@ -522,8 +522,9 @@ export class App {
         this.drawHowTo();
         break;
     }
-    if (this.settings.subtitles && this.screen !== 'game' && this.screen !== 'continue' && this.appVorg.current && !(this.screen === 'attract' && this.attractPage === 'vorg')) {
-      drawSubtitle(fb, this.appVorg.current.text, FB_H - 40);
+    const showAppLine = this.screen === 'menu' || (this.screen === 'attract' && this.attractPage !== 'vorg' && this.attractPage !== 'demo');
+    if (this.settings.subtitles && showAppLine && this.appVorg.current) {
+      drawSubtitle(fb, this.appVorg.current.text, FB_H - 30);
     }
     this.lastLook = look;
     buildLineMap(fb.lineMap, look, this.frame, ov);
@@ -651,7 +652,7 @@ export class App {
     });
     fb.textCentered('FIRE OR TAP TO CHOOSE', FB_W / 2, 248, PEN.STAR2, 'small');
     const cur = this.appVorg.current;
-    drawVorgFace(fb, FB_W / 2, 280, cur ? mouthFor(cur.ph, this.frame - cur.start) : 0, 1);
+    drawVorgFace(fb, FB_W / 2, 266, cur ? mouthFor(cur.ph, this.frame - cur.start) : 0, 1);
   }
 
   private drawPause(): void {
@@ -687,8 +688,8 @@ export class App {
       const ch = INITIAL_CHARS[s.chars[i]];
       const active = i === s.pos;
       if (active) {
-        fb.textCentered('<', x, 128, PEN.HUD1); // drawn rotated by meaning: up arrow
-        fb.textCentered('>', x, 182, PEN.HUD1);
+        fb.textCentered('\u25b2', x, 130, PEN.HUD1);
+        fb.textCentered('\u25bc', x, 180, PEN.HUD1);
       }
       fb.textCentered(ch === ' ' ? '_' : ch, x, 150, active && (this.frame & 8) ? PEN.HUD2 : PEN.WHITE, 'big', 2);
     }
