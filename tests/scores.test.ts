@@ -4,6 +4,13 @@ import { defaultScores, insertScore, scoreRank, type ScoreEntry } from '../src/p
 describe('high-score table', () => {
   const table = defaultScores();
 
+  it('starts with AAM on top and KOP END together', () => {
+    expect(table[0].initials).toBe('AAM');
+    const names = table.map((e) => e.initials).join(' ');
+    expect(names).toContain('KOP END');
+    expect(names).toContain('LFC');
+  });
+
   it('has ten entries, best first', () => {
     expect(table.length).toBe(10);
     for (let i = 1; i < 10; i++) expect(table[i - 1].score).toBeGreaterThanOrEqual(table[i].score);

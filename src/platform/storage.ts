@@ -76,10 +76,27 @@ export function saveSettings(s: Settings): void {
   write(KEYS.settings, s);
 }
 
-/** A default table so the attract screen has something to show. */
+/**
+ * The table a new machine starts with. AAM holds the top spot; the rest is
+ * for a Liverpool fan: KOP and END sit together so they read "KOP END",
+ * and MER / SEY spell MERSEY. LFC's score is a nod to the club's founding
+ * year (1892).
+ */
+export const DEFAULT_TABLE: [string, number][] = [
+  ['AAM', 20000],
+  ['LFC', 18920],
+  ['KOP', 16000],
+  ['END', 14000],
+  ['YNW', 12000],
+  ['ANF', 10000],
+  ['RED', 8000],
+  ['LIV', 6000],
+  ['MER', 4000],
+  ['SEY', 2000],
+];
+
 export function defaultScores(): ScoreEntry[] {
-  const names = ['VRG', 'BOT', 'ZAP', 'QBT', 'NUL', 'K9X', 'ARC', 'RAM', 'BIT', 'CPU'];
-  return names.map((initials, i) => ({ initials, score: 20000 - i * 2000, level: Math.max(0, 3 - Math.floor(i / 3)), difficulty: 'normal' as Difficulty }));
+  return DEFAULT_TABLE.map(([initials, score], i) => ({ initials, score, level: Math.max(0, 3 - Math.floor(i / 3)), difficulty: 'normal' as Difficulty }));
 }
 
 export function loadScores(): ScoreEntry[] {
