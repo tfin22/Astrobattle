@@ -7,6 +7,11 @@ describe('playtest 1: the opening scroll', () => {
     expect(STORY.length).toBeGreaterThan(15);
     const text = STORY.map(([t]) => t).join(' ');
     expect(text).toContain('VORG');
+    expect(text).toContain('VORF26');
+    expect(text).toMatch(/REDISCOVERED/);
+    expect(text).toMatch(/CATAPULTED/);
+    // The new opening comes first, then the original story continues.
+    expect(text.indexOf('CATAPULTED')).toBeLessThan(text.indexOf('YOUR ORDERS'));
     expect(text).toContain('QUANTUM ADMIRAL');
     expect(text).not.toMatch(/GORF/);
     for (const [t] of STORY) expect(textWidth(t), t).toBeLessThanOrEqual(FB_W - 4);

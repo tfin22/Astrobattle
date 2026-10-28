@@ -1,6 +1,8 @@
-# Quantum Cadet
+# VORF26
 
-An arcade homage to Gorf (1981), for phones in portrait. Five missions, one
+A lost arcade treasure, rediscovered: an homage to Gorf (1981), for phones
+in portrait. (Developed under the working title Quantum Cadet, which lives
+on as the first rank.) Five missions, one
 shot at a time, and VORG - the Vast Orbital Robot Garrison - talking at you
 the whole way. All art, sound, speech and text are original.
 

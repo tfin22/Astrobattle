@@ -1,6 +1,7 @@
 import { FB_H, FB_W, type Framebuffer } from './framebuffer';
 import { computeLayout, type Layout } from './layout';
 import type { InputManager } from '../platform/input';
+import { GAME_TITLE } from '../content/text';
 
 /**
  * Puts the framebuffer on the real screen. The 204x320 picture lives in its
@@ -160,7 +161,7 @@ export class Display {
       ctx.font = `bold ${Math.round(mh * 0.42)}px monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('QUANTUM CADET', l.play.x + l.play.w / 2, my + mh / 2);
+      ctx.fillText(GAME_TITLE, l.play.x + l.play.w / 2, my + mh / 2);
     }
   }
 

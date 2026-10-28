@@ -1,15 +1,33 @@
 import { RANKS } from './ranks';
+import { GAME_TITLE } from './text';
 
 /**
  * The attract-mode scroll, shown after the title. Original text.
- * Each line: [text, style]. '' is a blank line.
+ * Each line: [text, style]. '' is a blank line. Max 25 characters a line.
  */
 export type StoryStyle = 'body' | 'head' | 'rank';
 
 export const STORY: [string, StoryStyle][] = [
-  ['THE VAST ORBITAL', 'body'],
+  ['A HIDDEN TREASURE', 'head'],
+  ['', 'body'],
+  ['LOST FOR DECADES,', 'body'],
+  ['AN ARCADE CABINET', 'body'],
+  ['WAS REDISCOVERED', 'body'],
+  ['IN 2026.', 'body'],
+  ['', 'body'],
+  [`ITS NAME: ${GAME_TITLE}.`, 'head'],
+  ['', 'body'],
+  ['THE MOMENT IT WAS', 'body'],
+  ['SWITCHED ON, THE ONE', 'body'],
+  ['WHO FOUND IT WAS', 'body'],
+  ['CATAPULTED INTO', 'body'],
+  ['ITS WORLD.', 'body'],
+  ['', 'body'],
+  ['THAT ONE IS YOU.', 'head'],
+  ['', 'body'],
+  ['INSIDE, THE VAST ORBITAL', 'body'],
   ['ROBOT GARRISON', 'body'],
-  ['HAS PARKED OVER EARTH.', 'body'],
+  ['RULES THE SKY.', 'body'],
   ['', 'body'],
   ['IT CALLS ITSELF VORG.', 'body'],
   ['IT HAS OPINIONS', 'body'],
@@ -31,9 +49,10 @@ export const STORY: [string, StoryStyle][] = [
   ...RANKS.map((r) => [r.name, 'rank'] as [string, StoryStyle]),
   ['', 'body'],
   ['ONE SHIP. ONE SHOT.', 'head'],
-  ['VORG IS WAITING.', 'head'],
+  ['THE ONLY WAY OUT', 'head'],
+  ['IS THROUGH VORG.', 'head'],
 ];
 
 /** Pixels per frame the scroll climbs, and the gap between lines. */
-export const STORY_SPEED = 0.6;
+export const STORY_SPEED = 0.65;
 export const STORY_LINE = 12;

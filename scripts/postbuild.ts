@@ -72,9 +72,9 @@ fs.writeFileSync('dist/icon-192.png', png(192));
 fs.writeFileSync('dist/icon-512.png', png(512));
 
 const manifest = {
-  name: 'Quantum Cadet',
-  short_name: 'Q. Cadet',
-  description: 'An arcade homage. VORG is waiting.',
+  name: 'VORF26',
+  short_name: 'VORF26',
+  description: 'A lost arcade treasure, rediscovered. VORG is waiting.',
   start_url: './',
   scope: './',
   display: 'fullscreen',
@@ -91,7 +91,7 @@ fs.writeFileSync('dist/manifest.webmanifest', JSON.stringify(manifest, null, 2))
 // Service worker: cache everything up front, serve from cache (offline),
 // refresh the cache in the background when online.
 const version = crypto.createHash('sha1').update(html).digest('hex').slice(0, 10);
-const sw = `// Quantum Cadet offline cache (generated).
+const sw = `// VORF26 offline cache (generated).
 const CACHE = 'qc-${version}';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => {

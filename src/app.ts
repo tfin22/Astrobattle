@@ -27,6 +27,7 @@ import { DIFFICULTIES, type GameEvent, type GameMode } from './game/types';
 import type { Enemy } from './game/types';
 import { DebugOverlay } from './debug/overlay';
 import { STORY, STORY_LINE, STORY_SPEED } from './content/story';
+import { GAME_TITLE, GAME_TAGLINE } from './content/text';
 
 export type Screen = 'attract' | 'menu' | 'game' | 'continue' | 'initials' | 'settings' | 'practice' | 'howto';
 type AttractPage = 'title' | 'story' | 'vorg' | 'scores' | 'demo' | 'table';
@@ -560,8 +561,8 @@ export class App {
   }
 
   private drawLogo(y: number): void {
-    this.fb.textCentered('QUANTUM', FB_W / 2, y, PEN.HUD2, 'big', 3);
-    this.fb.textCentered('CADET', FB_W / 2, y + 28, PEN.HUD2, 'big', 4);
+    this.fb.textCentered(GAME_TITLE, FB_W / 2, y + 6, PEN.HUD2, 'big', 4);
+    this.fb.textCentered(GAME_TAGLINE, FB_W / 2, y + 42, PEN.HUD1, 'small');
   }
 
   private drawAttract(): Look {
@@ -581,10 +582,9 @@ export class App {
     switch (page) {
       case 'story': {
         // The opening scroll climbs up under a fixed title.
-        fb.textCentered('QUANTUM', FB_W / 2, 14, PEN.HUD2, 'big', 2);
-        fb.textCentered('CADET', FB_W / 2, 31, PEN.HUD2, 'big', 2);
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 50, PEN.WHITE);
-        const top = 66;
+        fb.textCentered(GAME_TITLE, FB_W / 2, 16, PEN.HUD2, 'big', 3);
+        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 44, PEN.WHITE);
+        const top = 60;
         const y0 = FB_H - 8 - this.screenT * STORY_SPEED;
         STORY.forEach(([text, style], i) => {
           const y = Math.round(y0 + i * STORY_LINE);
@@ -596,7 +596,7 @@ export class App {
       }
       case 'title': {
         this.drawLogo(64);
-        fb.textCentered('AN ARCADE HOMAGE', FB_W / 2, 140, PEN.HUD1, 'small');
+        fb.textCentered('LOST FOR DECADES. FOUND IN 2026.', FB_W / 2, 140, PEN.STAR2, 'small');
         drawVorgFace(fb, FB_W / 2, 190, 0, 1);
         if (blink) fb.textCentered(this.display.touch ? 'TAP TO INSERT COIN' : 'INSERT COIN', FB_W / 2, 236, PEN.WHITE);
         fb.textCentered('VORG IS WATCHING', FB_W / 2, 290, PEN.STAR2, 'small');

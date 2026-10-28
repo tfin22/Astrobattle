@@ -281,3 +281,16 @@ checked against documentation.
   every step without moving, so the last fighter could be stuck off screen.
   The march now measures the block from every surviving fighter's slot and
   only turns at the edge it's heading for.
+
+## The name: VORF26
+
+- At the playtester's request the game is now called **VORF26** (title
+  screens, menu, scroll, marquee, page title, app name). "Quantum Cadet"
+  lives on as the first rank, and VORG is still the villain. The name lives
+  in `content/text.ts` (`GAME_TITLE`).
+- The opening scroll now begins with the frame story: VORF26 is a hidden
+  treasure, a cabinet lost for decades and rediscovered in 2026, and
+  switching it on catapulted its discoverer - you - into its world. The
+  original story (VORG, your orders, the rank ladder) follows, ending on
+  "the only way out is through VORG". The title page adds "LOST FOR
+  DECADES. FOUND IN 2026."
