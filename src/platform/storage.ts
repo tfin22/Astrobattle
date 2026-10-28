@@ -78,7 +78,7 @@ export function saveSettings(s: Settings): void {
 
 /**
  * The table a new machine starts with. AAM holds the top spot; the rest is
- * for a Liverpool fan: KOP and END sit together so they read "KOP END",
+ * mostly for a Liverpool fan, plus a couple of arcade classics: KOP and END sit together so they read "KOP END",
  * and MER / SEY spell MERSEY. LFC's score is a nod to the club's founding
  * year (1892).
  */
@@ -87,8 +87,8 @@ export const DEFAULT_TABLE: [string, number][] = [
   ['LFC', 18920],
   ['KOP', 16000],
   ['END', 14000],
-  ['YNW', 12000],
-  ['ANF', 10000],
+  ['ACE', 12000],
+  ['AAA', 10000],
   ['RED', 8000],
   ['LIV', 6000],
   ['MER', 4000],
