@@ -74,3 +74,44 @@ checked against documentation.
   returning), turn cyan, aim at the field above you and explode against it;
   through a gap they reach your zone. If they miss they loop back in from
   the top to their slot.
+
+## Sound
+
+- **QC-1 chip** (`audio/chip.ts`): 3 square channels (adjustable duty), a
+  15-bit LFSR noise channel, one global triangle vibrato, 4-bit volumes,
+  ticked at 60 Hz like a game's sound driver; output summed and quantised to
+  6 bits. Effects are programs for it in `content/sfx.ts` (voices with pitch
+  and volume sweeps, arpeggios, melodies). All rendered at 22,050 Hz into
+  buffers when audio unlocks (a few ms).
+- **Laser charge** is re-rendered to each laser's exact charge length (it's
+  rank-dependent), so the rising tone peaks as the beam fires.
+- **Background pulse**: two alternating low thumps. Shield Wall beats it on
+  every march step (so it speeds up with the block); other missions beat it
+  at an interval that shrinks as enemies thin out.
+- A gentle 7 kHz low-pass on the master output: a cabinet speaker, not hi-fi.
+- Audio needs a user gesture on phones: the first tap unlocks it (the coin).
+
+## VORG's voice
+
+- **Synthesiser** (`audio/speech.ts`): Rosenberg-style glottal pulse
+  (differentiated = buzzy) at a monotone 85 Hz with 4 pitch levels
+  (x0.84 / 1 / 1.17 / 1.34, like the SC-01's 2-bit inflection); noise for
+  aspiration and frication; 5 cascaded resonators (F1-F3 moving, F4/F5
+  fixed) plus a band-pass for frication. Parameters update every 5 ms with
+  short linear transitions (35% in, 25% out) - crude on purpose. Output is
+  sample-held to ~11 kHz and quantised to 7 bits for the crackle.
+- **Intelligibility was measured, not guessed**: every line was rendered and
+  run through an offline speech recogniser (Vosk small English model).
+  Tuning took word recognition from 19% to 45% (excluding the made-up word
+  "VORG"): adding fixed F4/F5, smoother transitions, 20% shorter vowels, a
+  lower pitch, quieter frication and damped upper formants on nasals. For a
+  deliberately robotic voice that is "just about intelligible"; subtitles are
+  on by default.
+- **Lines**: 67 original lines across 16 triggers. `{RANK}` is spoken from
+  each rank's phoneme string. High-priority triggers (mission start, death,
+  promotion, game over...) wait for the current line; low-priority taunts
+  (near miss, miss streak, extra life) are dropped while VORG is busy or in
+  the 4 s cooldown after a line.
+- **Subtitles** appear in a band under the score in play, and on the title
+  cards under VORG's face, whose mouth follows the phonemes (open on vowels,
+  half on most consonants, shut on M/B/P/F/V).
