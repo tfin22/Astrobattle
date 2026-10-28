@@ -75,7 +75,7 @@ export const SPACE_WARP = {
   look: 'spaceWarp' as LookName,
   intro: 'missionSpaceWarp',
   total: [16, 18, 20, 22, 24, 26],
-  maxActive: [3, 4, 4, 5, 6, 6],
+  maxActive: [4, 4, 5, 5, 6, 7],
   /** Spin direction alternates by spawn; true = both ways from this rank. */
   bothWaysFromRank: 2,
   vortexRadius: 30,

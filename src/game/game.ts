@@ -5,7 +5,7 @@ import { FB_W, FB_H } from '../render/framebuffer';
 import { ENEMY_TYPES, type EnemyTypeName } from '../content/enemies';
 import { SCORING } from '../content/scoring';
 import { MISSIONS } from '../content/missions';
-import { PEN } from '../palette';
+import { PEN, col } from '../palette';
 import { rankParams, type RankParams } from './rankParams';
 import { createMission } from './missions';
 import type { Mission } from './mission';
@@ -523,8 +523,8 @@ export class Game {
     for (const e of this.enemies) if (e.alive) this.killEnemy(e, false);
     this.sfx('flagBoom');
     this.events.push({ t: 'haptic', id: 'boom' });
-    this.flash = 10;
-    this.flashColour = 7;
+    this.flash = 6;
+    this.flashColour = col('GREY', 5);
     this.setPhase('boom');
     this.say('flagshipDestroyed');
   }
@@ -534,23 +534,23 @@ export class Game {
     const { x, y } = this.boom;
     // Stage 1: flashes and a fireball at the reactor.
     if (t < 70) {
-      if (t % 10 === 0) {
-        this.flash = 4;
-        this.flashColour = t % 20 === 0 ? 7 : 40;
+      // A few soft flashes, never a strobe (photosensitivity).
+      if (t === 24 || t === 50) {
+        this.flash = 3;
+        this.flashColour = t === 24 ? col('RED', 2) : col('ORANGE', 2);
       }
       if (t % 6 === 0) this.explode(x + this.fx.range(-6, 6), y + this.fx.range(-3, 3), 18, true);
     } else if (t < 170) {
       // Stage 2: chain explosions along the hull.
       if (t % 5 === 0) this.explode(x + this.fx.range(-32, 32), y + this.fx.range(-8, 8), 14, t % 15 === 0);
-      if (t % 25 === 0) this.flash = 2;
     } else if (t === 170) {
       // Stage 3: the screen-filling blast.
       for (let i = 0; i < 4; i++) {
         this.addParticle({ kind: 'ring', x, y, vx: 0, vy: 0, life: 90, max: 90, r: 2 + i * 8, vr: 1.6 + i * 0.4 });
       }
       this.explode(x, y, 90, true);
-      this.flash = 12;
-      this.flashColour = 7;
+      this.flash = 8;
+      this.flashColour = col('YELLOW', 3);
     }
     this.updateParticles();
     if (t >= TUNING.boomFrames) {

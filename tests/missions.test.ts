@@ -112,3 +112,118 @@ describe('Swarm', () => {
     expect(g.phase).toBe('done');
   });
 });
+
+import type { SpaceWarp } from '../src/game/missions/spaceWarp';
+import type { Flagship } from '../src/game/missions/flagship';
+
+describe('Space Warp', () => {
+  it('enemies emerge from the vortex small and grow as they spiral out', () => {
+    const g = newGame({ mission: 3, seed: 3 });
+    g.invincible = true;
+    const m = g.mission as SpaceWarp;
+    run(g, 60);
+    const e = g.enemies.find((x) => x.type === 'warpling')!;
+    expect(e).toBeTruthy();
+    expect(Math.hypot(e.x - m.cx, e.y - m.cy)).toBeLessThan(20);
+    expect(e.stage).toBe(0);
+    let maxStage = 0;
+    for (let i = 0; i < 400 && e.alive; i++) {
+      g.step(idle);
+      maxStage = Math.max(maxStage, e.stage);
+    }
+    expect(maxStage).toBe(2);
+  });
+
+  it('escaped enemies go back into the vortex; clearing needs them all', () => {
+    const g = newGame({ mission: 3, seed: 3 });
+    g.invincible = true;
+    const m = g.mission as SpaceWarp;
+    const total = m.total;
+    run(g, 3000);
+    // Nobody shot anything: everyone who escaped is queued again.
+    expect(m.toSpawn + m.warplings(g).length).toBe(total);
+    expect(g.phase).toBe('play');
+  });
+
+  it('pays most for small, early hits', () => {
+    const g = newGame({ mission: 3, seed: 3 });
+    run(g, 60);
+    const e = g.enemies.find((x) => x.type === 'warpling')!;
+    const before = g.score;
+    g.killEnemy(e);
+    expect(g.score - before).toBe(200);
+  });
+
+  it('can be cleared', () => {
+    const g = newGame({ mission: 3, seed: 2, single: true });
+    g.invincible = true;
+    const bot = new Bot();
+    for (let i = 0; i < 30000 && g.phase !== 'done'; i++) g.step(bot.think(g));
+    expect(g.phase).toBe('done');
+  });
+});
+
+describe('Flagship', () => {
+  function flagGame(over = {}) {
+    const g = newGame({ mission: 4, seed: 5, ...over });
+    const m = g.mission as Flagship;
+    return { g, m };
+  }
+  /** Fire one shot straight up at screen x, by teleporting the ship under it. */
+  function shootAt(g: ReturnType<typeof newGame>, m: Flagship, dx: number) {
+    g.player.x = m.x + dx;
+    g.step({ mx: 0, my: 0, fire: true, fireHeld: true });
+    // Freeze the ship so the column under it stays put.
+    const dir = m.dir;
+    m.dir = 0;
+    for (let i = 0; i < 80 && g.shot.alive; i++) g.step(idle);
+    m.dir = dir;
+  }
+
+  it('shots chip hull blocks one at a time', () => {
+    const { g, m } = flagGame();
+    g.invincible = true;
+    const before = m.remaining();
+    shootAt(g, m, 0);
+    expect(m.remaining()).toBeLessThan(before);
+    expect(m.reactorHit).toBe(false);
+  });
+
+  it('the reactor is only reachable through a channel, and destroying it promotes you', () => {
+    const { g, m } = flagGame();
+    g.invincible = true;
+    for (let i = 0; i < m.rows; i++) {
+      shootAt(g, m, 0);
+      expect(m.reactorHit).toBe(false);
+    }
+    shootAt(g, m, 0);
+    expect(m.reactorHit).toBe(true);
+    expect(g.phase).toBe('boom');
+    const level = g.level;
+    run(g, 400);
+    expect(g.level).toBe(level + 1);
+    run(g, 400);
+    expect(g.missionIndex).toBe(0); // the next loop starts
+  });
+
+  it('hull damage persists after you lose a ship', () => {
+    const { g, m } = flagGame();
+    shootAt(g, m, 0);
+    shootAt(g, m, 0);
+    const left = m.remaining();
+    g.killPlayer();
+    run(g, 200);
+    expect(g.phase).toBe('play');
+    expect(g.mission).toBe(m);
+    expect(m.remaining()).toBe(left);
+  });
+
+  it('can be cleared by the bot', () => {
+    const g = newGame({ mission: 4, seed: 2, single: true });
+    g.invincible = true;
+    const bot = new Bot();
+    for (let i = 0; i < 30000 && g.phase !== 'done'; i++) g.step(bot.think(g));
+    expect(g.phase).toBe('done');
+    expect(g.level).toBe(1);
+  });
+});

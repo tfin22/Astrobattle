@@ -150,3 +150,38 @@ checked against documentation.
   line. A late sidestep makes them miss.
 - Distinct from Galaxian on purpose: no grid formation, no flagship with
   escorts, no wrap-around single dives, all-new sprites and colours.
+
+## Space Warp
+
+- The vortex is painted once (three twisting arms, dithered toward the rim)
+  in the six colour-cycling pens; rotating the pen colours every 3 frames
+  makes the arms turn and pour without redrawing. A pulsing eye sits at the
+  centre. The rising drone loops for the whole mission.
+- Warplings spawn at the centre (always >= 100 px from the player's zone),
+  spin fast near the middle and slower further out while their radius grows
+  ever faster. Three sizes: small (r < 22, hitbox 4 px, 200 pts), medium
+  (100), large (r > 56, hitbox 11 px, 150 - the risky ones). They fire darts
+  once beyond r = 55, and never from below the ship.
+- Escapes aren't free: any that leave the screen go back into the vortex,
+  so the mission ends only when every one has been shot. From Lieutenant up
+  they spiral both ways.
+
+## Flagship
+
+- The flagship (61x13) slides between the edges at 0.5 px/frame (x rank
+  speed), bombing from its hull and launching up to 2-4 fighters that weave
+  down at you and leave off the bottom.
+- The hull is 15 columns x 4-7 rows (by rank) of 4x3 blocks under the body.
+  A shot removes exactly one block. The reactor (11 px wide) sits in a notch
+  in the body's underside behind the middle three columns; anything else
+  that reaches the body just clinks off. Because the ship drifts, you must
+  lead your shots to keep digging the same column.
+- Hull damage is kept when you lose a ship (the mission object survives the
+  death; only the player respawns).
+- **The big one**: on a reactor hit everything else explodes, then three
+  stages over ~4.3 s - fireballs at the reactor, chain explosions along the
+  hull with the ship shaking, then a screen-filling blast of four expanding
+  colour-cycled rings and 90 sparks - over the long falling boom and a long
+  haptic rumble. Then the promotion card and the next loop.
+- **Photosensitivity**: the screen flashes only a handful of times, softly
+  (grey, dark red, dark orange, dim yellow), never strobing.

@@ -75,7 +75,7 @@ export const TUNING = {
   warpFireRadius: 55,      // they start firing once this far out
 
   // ---- Flagship ---------------------------------------------------------------------
-  flagshipSpeed: 0.55,
+  flagshipSpeed: 0.5,
   flagshipY: 58,
   hullCols: 15,
   hullBlockW: 4,

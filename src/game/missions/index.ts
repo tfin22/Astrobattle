@@ -3,6 +3,8 @@ import type { Mission } from '../mission';
 import { ShieldWall } from './shieldWall';
 import { LaserAttack } from './laserAttack';
 import { Swarm } from './swarm';
+import { SpaceWarp } from './spaceWarp';
+import { Flagship } from './flagship';
 
 /** Placeholder until a mission is built: clears at once. */
 class Pending implements Mission {
@@ -25,6 +27,10 @@ export function createMission(id: MissionId): Mission {
       return new LaserAttack();
     case 'swarm':
       return new Swarm();
+    case 'spaceWarp':
+      return new SpaceWarp();
+    case 'flagship':
+      return new Flagship();
     default:
       return new Pending(id);
   }
