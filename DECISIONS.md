@@ -43,3 +43,34 @@ checked against documentation.
   scale (small phones). All remaining height below the picture is the control
   panel (at least 180 CSS px). Without a touchscreen the picture is centred
   and no controls are drawn.
+
+## The ship and the quantum shot
+
+- **Zone.** The ship moves in 8 directions inside y 236-300 (the lowest
+  ~22% of the 292-row playfield). Diagonals are not slowed down, as on 1981
+  hardware. Speed 1.45 px/frame.
+- **Cancel feedback.** A cancelled shot pops (a small white/yellow star at
+  the point it vanished) with its own blip, distinct from the firing zap.
+- **Misses.** A shot that leaves the top or is cancelled counts as a miss
+  for VORG's "run of misses" taunt (5 in a row).
+- **Respawn grace.** After a death the mission continues where it was, but
+  the new ship blinks and is untouchable for 1.5 s, and enemy fire on
+  screen is cleared at the moment of death, so a respawn can never be an
+  instant second death.
+
+## Shield Wall
+
+- **Formation.** Our own stepped arrowhead (5 rows, 32 fighters; a sixth row
+  from Commander up). The fighter is a domed robot with a visor, not an
+  "invader" crab. Colour changes by screen band as the block descends.
+- **Force field.** A 5-pixel-thick parabolic arch from the screen edges up
+  to an apex over the centre. The ship passes through it freely (it's a
+  field, not a wall), so stepping out from under it is a choice. Bombs blow
+  a 2.6 px crater, your own shots a 1.3 px one, a diving fighter a 6 px one.
+- **The block never lands.** It stops descending at y 196 (well above the
+  player's zone) and keeps marching; losing by invasion would be unfair on
+  a phone, and the pressure comes from bombs and divers instead.
+- **Divers** peel off (state formation -> leaving -> attacking ->
+  returning), turn cyan, aim at the field above you and explode against it;
+  through a gap they reach your zone. If they miss they loop back in from
+  the top to their slot.

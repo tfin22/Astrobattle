@@ -19,6 +19,14 @@ export function sprite(name: string, ...frames: string[][]): SpriteDef {
   return { name, frames };
 }
 
+/**
+ * Mirror a left half (including the centre column) into a symmetric frame.
+ * "..1" -> "..1.." ; the last character is the centre column.
+ */
+export function sym(rows: string[]): string[] {
+  return rows.map((r) => r + [...r.slice(0, -1)].reverse().join(''));
+}
+
 export function spriteSize(def: SpriteDef): { w: number; h: number } {
   return { w: def.frames[0][0].length, h: def.frames[0].length };
 }

@@ -1,41 +1,41 @@
-import { Framebuffer } from './render/framebuffer';
-import { Display } from './render/display';
-import { InputManager } from './platform/input';
-import { FixedLoop } from './core/loop';
-import { buildLineMap } from './render/colours';
-import { LOOKS } from './content/looks';
-import { PEN } from './palette';
+import { App } from './app';
+import { Bot } from './game/ai';
+import { registerServiceWorker } from './platform/pwa';
 
-// Milestone 1 test scene: framebuffer, palette bands, input and the loop.
 const canvas = document.getElementById('screen') as HTMLCanvasElement;
-const display = new Display(canvas);
-const input = new InputManager(canvas);
-display.touch = matchMedia('(pointer: coarse)').matches;
-display.resize();
-input.layout = display.layout;
-window.addEventListener('resize', () => {
-  display.resize();
-  input.layout = display.layout;
-});
-const fb = new Framebuffer();
-let x = 102;
-let y = 270;
-let frame = 0;
-const loop = new FixedLoop({
-  step() {
-    const i = input.sample();
-    x += i.mx * 1.5;
-    y += i.my * 1.5;
-    frame++;
+const app = new App(canvas);
+app.start();
+registerServiceWorker();
+
+/**
+ * Debug hook for headless checks and screenshots: reach any state quickly.
+ * Not used by the game itself.
+ */
+const hook = {
+  app,
+  /** Start a game at a mission (0-4) and level (0 = Cadet). */
+  start(mission = 0, level = 0, mode: 'arcade' | 'practice' | 'free' = 'arcade') {
+    app.startGame(mode, mission, level);
+    return app.game!.opts.seed;
   },
-  render() {
-    fb.clear();
-    for (let p = 0; p < 32; p++) fb.rect((p % 8) * 25 + 2, 30 + Math.floor(p / 8) * 20, 22, 16, p);
-    fb.textCentered('QUANTUM CADET', 102, 140, PEN.HUD2);
-    fb.textCentered('MILESTONE 1', 102, 156, PEN.WHITE, 'small');
-    fb.rect(x - 4, y - 4, 8, 8, PEN.PLAYER);
-    buildLineMap(fb.lineMap, LOOKS.attract, frame);
-    display.present(fb, input, true);
+  /** Run the current game for n frames with the AI pilot at the stick. */
+  autoplay(n: number, invincible = true) {
+    const g = app.game;
+    if (!g) return 'no game';
+    g.invincible = invincible;
+    const bot = new Bot('patient');
+    for (let i = 0; i < n && g.phase !== 'done'; i++) g.step(bot.think(g));
+    return { phase: g.phase, mission: g.missionIndex, score: g.score, enemies: g.enemies.length };
   },
-});
-loop.start();
+  /** Advance the game n frames with no input. */
+  idle(n: number) {
+    const g = app.game;
+    if (!g) return 'no game';
+    for (let i = 0; i < n; i++) g.step({ mx: 0, my: 0, fire: false, fireHeld: false });
+    return g.phase;
+  },
+  screen(s: string) {
+    app.setScreen(s as never);
+  },
+};
+(window as unknown as { __qc: typeof hook }).__qc = hook;

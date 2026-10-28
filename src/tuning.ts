@@ -43,7 +43,7 @@ export const TUNING = {
   // ---- Shield Wall ----------------------------------------------------------
   wallStepX: 2,
   wallStepDown: 5,
-  wallTickSlow: 30,      // frames per march step with a full block
+  wallTickSlow: 24,      // frames per march step with a full block
   wallTickFast: 2,       // the last fighter
   wallFloor: 196,        // the block never marches lower than this
   wallBombChance: 0.022, // per march-step per eligible shooter
