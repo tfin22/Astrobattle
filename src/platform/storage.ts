@@ -3,7 +3,10 @@
  * versioned so a format change can be detected and reset cleanly. Storage
  * may be unavailable (private mode): everything falls back to defaults.
  */
+import type { Difficulty } from '../game/types';
+
 export interface Settings {
+  difficulty: Difficulty;
   startShips: number;     // 3..5
   holdToFire: boolean;
   dpad: boolean;
@@ -16,6 +19,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  difficulty: 'normal',
   startShips: 3,
   holdToFire: false,
   dpad: false,
@@ -31,6 +35,8 @@ export interface ScoreEntry {
   initials: string;
   score: number;
   level: number;
+  /** Missing on entries saved before difficulty existed: those were played at what is now Easy. */
+  difficulty?: Difficulty;
 }
 
 export interface Progress {
@@ -62,7 +68,9 @@ function write<T>(key: string, data: T): void {
 }
 
 export function loadSettings(): Settings {
-  return { ...DEFAULT_SETTINGS, ...(read<Partial<Settings>>(KEYS.settings) ?? {}) };
+  const s = { ...DEFAULT_SETTINGS, ...(read<Partial<Settings>>(KEYS.settings) ?? {}) };
+  if (!['easy', 'normal', 'hard'].includes(s.difficulty)) s.difficulty = 'normal';
+  return s;
 }
 export function saveSettings(s: Settings): void {
   write(KEYS.settings, s);
@@ -71,7 +79,7 @@ export function saveSettings(s: Settings): void {
 /** A default table so the attract screen has something to show. */
 export function defaultScores(): ScoreEntry[] {
   const names = ['VRG', 'BOT', 'ZAP', 'QBT', 'NUL', 'K9X', 'ARC', 'RAM', 'BIT', 'CPU'];
-  return names.map((initials, i) => ({ initials, score: 20000 - i * 2000, level: Math.max(0, 3 - Math.floor(i / 3)) }));
+  return names.map((initials, i) => ({ initials, score: 20000 - i * 2000, level: Math.max(0, 3 - Math.floor(i / 3)), difficulty: 'normal' as Difficulty }));
 }
 
 export function loadScores(): ScoreEntry[] {

@@ -12,7 +12,7 @@ import { createMission } from './missions';
 import type { Mission } from './mission';
 import { Vorg } from './vorg';
 import type {
-  Bullet, BulletType, Enemy, EnemyState, FrameInput, GameEvent, GameOptions, Particle, Phase, SfxId, Shot,
+  Bullet, BulletType, Difficulty, Enemy, EnemyState, FrameInput, GameEvent, GameOptions, Particle, Phase, SfxId, Shot,
 } from './types';
 
 export const PLAYER_START = { x: FB_W / 2, y: 290 };
@@ -87,12 +87,16 @@ export class Game {
   // ---------------------------------------------------------------------
   // Flow
 
+  get difficulty(): Difficulty {
+    return this.opts.difficulty ?? 'normal';
+  }
+
   get missionDef() {
     return MISSIONS[this.missionIndex];
   }
 
   startMission(): void {
-    this.rp = rankParams(this.level);
+    this.rp = rankParams(this.level, this.difficulty);
     this.enemies = [];
     this.bullets = [];
     this.shot.alive = false;
@@ -158,7 +162,7 @@ export class Game {
             this.player.x = PLAYER_START.x;
             this.player.y = PLAYER_START.y;
             this.player.alive = true;
-            this.player.invuln = TUNING.respawnGrace;
+            this.player.invuln = Math.round(TUNING.respawnGrace * TUNING.difficulty[this.difficulty].grace);
             this.setPhase('play');
           }
         }

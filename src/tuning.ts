@@ -120,4 +120,16 @@ export const TUNING = {
     loopStep: 0.05,
     loopCap: 6,
   },
+
+  /**
+   * The difficulty setting, applied on top of rank scaling. Easy is the
+   * original tuning (playtest round 1); Normal and Hard step up from it.
+   * Multipliers, except hullRows (rows added) and grace (x the respawn
+   * grace). Lasers never charge faster than minLaserCharge.
+   */
+  difficulty: {
+    easy:   { speed: 1,    fire: 1,    dive: 1,    swarm: 1,    laserCharge: 1,    warpSpawn: 1,    hullRows: 0, grace: 1 },
+    normal: { speed: 1.12, fire: 1.35, dive: 1.25, swarm: 1.15, laserCharge: 0.85, warpSpawn: 0.85, hullRows: 1, grace: 1 },
+    hard:   { speed: 1.25, fire: 1.75, dive: 1.5,  swarm: 1.3,  laserCharge: 0.72, warpSpawn: 0.72, hullRows: 2, grace: 0.8 },
+  },
 } as const;

@@ -23,7 +23,7 @@ import {
 } from './platform/storage';
 import { AudioEngine } from './audio/engine';
 import { goFullscreen, haptic, isFullscreen, keepAwake } from './platform/device';
-import type { GameEvent, GameMode } from './game/types';
+import { DIFFICULTIES, type GameEvent, type GameMode } from './game/types';
 import type { Enemy } from './game/types';
 import { DebugOverlay } from './debug/overlay';
 
@@ -295,6 +295,7 @@ export class App {
       mode,
       startShips: this.settings.startShips,
       holdToFire: this.settings.holdToFire,
+      difficulty: this.settings.difficulty,
       mission,
       level,
       single: mode === 'practice',
@@ -365,7 +366,7 @@ export class App {
     const eligible = g.opts.mode === 'arcade' || (g.opts.mode === 'free' && !g.continued);
     const place = eligible ? scoreRank(this.scores, g.score) : -1;
     if (place >= 0) {
-      this.initials = { chars: [0, 0, 0], pos: 0, entry: { initials: 'AAA', score: g.score, level: g.level }, place };
+      this.initials = { chars: [0, 0, 0], pos: 0, entry: { initials: 'AAA', score: g.score, level: g.level, difficulty: g.difficulty }, place };
       this.appVorg.trigger('highScore', this.frame, g.level);
       this.setScreen('initials');
     } else {
@@ -423,7 +424,13 @@ export class App {
     const save = () => { saveSettings(s); this.applySettings(); };
     const toggle = (k: 'holdToFire' | 'dpad' | 'sound' | 'subtitles' | 'crt' | 'bezel' | 'haptics') => () => { s[k] = !s[k]; save(); };
     const onoff = (v: boolean) => (v ? 'ON' : 'OFF');
+    const step = (d: number) => {
+      const i = DIFFICULTIES.indexOf(s.difficulty);
+      s.difficulty = DIFFICULTIES[Math.max(0, Math.min(DIFFICULTIES.length - 1, i + d))];
+      save();
+    };
     return [
+      { label: 'DIFFICULTY', value: () => s.difficulty.toUpperCase(), action: () => step(1), left: () => step(-1), right: () => step(1) },
       { label: 'SHIPS', value: () => String(s.startShips), action: () => { s.startShips = s.startShips >= 5 ? 3 : s.startShips + 1; save(); },
         left: () => { s.startShips = Math.max(3, s.startShips - 1); save(); }, right: () => { s.startShips = Math.min(5, s.startShips + 1); save(); } },
       { label: 'HOLD TO FIRE', value: () => onoff(s.holdToFire), action: toggle('holdToFire'), left: toggle('holdToFire'), right: toggle('holdToFire') },
@@ -452,7 +459,8 @@ export class App {
     if (inp.back) return this.setScreen('menu');
     const before = this.settingsSel;
     this.navigate(inp, this.settingsItems(), 'settingsSel', 40);
-    if (this.settingsSel !== before && this.settingsSel !== 9) this.confirmReset = false;
+    const resetIdx = this.settingsItems().findIndex((it) => it.label === 'RESET SCORES' || it.label.startsWith('SURE'));
+    if (this.settingsSel !== before && this.settingsSel !== resetIdx) this.confirmReset = false;
   }
 
   // ---- Practice ---------------------------------------------------------------
@@ -610,6 +618,8 @@ export class App {
       fb.text(s.initials, 34, yy, pen);
       fb.text(pad(s.score, 7), 70, yy, pen);
       fb.text(rankLabel(s.level, true), 130, yy + 1, PEN.STAR2, 'small');
+      const d = s.difficulty ?? 'easy';
+      if (d !== 'normal') fb.text(d.toUpperCase(), FB_W - 20, yy + 1, d === 'hard' ? PEN.HUD1 : PEN.STAR3, 'small');
     });
   }
 
@@ -685,7 +695,8 @@ export class App {
     this.stars.draw(fb, this.frame);
     fb.textCentered('NEW HIGH SCORE', FB_W / 2, 30, PEN.HUD2, 'big', 1);
     fb.textCentered(pad(s.entry?.score ?? 0), FB_W / 2, 46, PEN.WHITE, 'big', 2);
-    fb.textCentered(rankLabel(s.entry?.level ?? 0), FB_W / 2, 74, PEN.HUD1, 'small');
+    const diff = s.entry?.difficulty && s.entry.difficulty !== 'normal' ? `  ${s.entry.difficulty.toUpperCase()}` : '';
+    fb.textCentered(rankLabel(s.entry?.level ?? 0) + diff, FB_W / 2, 74, PEN.HUD1, 'small');
     fb.textCentered('ENTER YOUR INITIALS', FB_W / 2, 100, PEN.WHITE, 'small');
     for (let i = 0; i < 3; i++) {
       const x = FB_W / 2 - 36 + i * 24 + 12;
@@ -715,7 +726,7 @@ export class App {
         fb.text(v, FB_W - 10 - v.length * 8 + 6, y, sel ? PEN.HUD2 : PEN.HUD1);
       }
     });
-    fb.textCentered('TAP A SIDE TO CHANGE A VALUE', FB_W / 2, 224, PEN.STAR2, 'small');
+    fb.textCentered('TAP A SIDE TO CHANGE A VALUE', FB_W / 2, 238, PEN.STAR2, 'small');
   }
 
   private drawPractice(): void {
@@ -738,6 +749,7 @@ export class App {
       fb.textCentered(b, FB_W / 2, y + 6, sel ? PEN.HUD2 : PEN.WHITE);
     });
     fb.textCentered(`RANKS UNLOCKED: ${Math.min(this.progress.bestLevel, 5) + 1} OF 6`, FB_W / 2, 230, PEN.STAR2, 'small');
+    fb.textCentered(`DIFFICULTY: ${this.settings.difficulty.toUpperCase()} (SEE SETTINGS)`, FB_W / 2, 242, PEN.STAR2, 'small');
   }
 
   private drawHowTo(): void {

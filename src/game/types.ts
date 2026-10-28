@@ -114,11 +114,16 @@ export type Phase = 'card' | 'play' | 'dying' | 'clear' | 'boom' | 'promotion' |
 
 export type GameMode = 'arcade' | 'free' | 'practice' | 'demo';
 
+export type Difficulty = 'easy' | 'normal' | 'hard';
+export const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
+
 export interface GameOptions {
   seed: number;
   mode: GameMode;
   startShips: number;
   holdToFire: boolean;
+  /** The difficulty setting (default normal). */
+  difficulty?: Difficulty;
   /** Starting level (0 = Cadet). */
   level?: number;
   /** Starting mission index 0..4. */

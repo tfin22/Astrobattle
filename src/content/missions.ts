@@ -119,6 +119,8 @@ export const FLAGSHIP_MISSION = {
   pattern: {
     bombSpread: 26, launchOffset: 24, leaveFrames: 20,
     weaveAmp: 22, weaveRate: 0.06, homing: 0.5, dartEvery: 50,
+    /** Below this height a fighter stops steering at you: a sidestep works. */
+    commitY: 190,
   },
 } satisfies MissionBase & Record<string, unknown>;
 

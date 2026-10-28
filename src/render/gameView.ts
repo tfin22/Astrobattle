@@ -249,7 +249,8 @@ function drawCard(fb: Framebuffer, g: Game, frame: number): void {
   fb.textCentered('NEXT RANK', FB_W / 2, 238, PEN.HUD1, 'small');
   const next = g.missionIndex === 4 ? rankLabel(g.level + 1) : rankLabel(g.level + 1);
   fb.textCentered(next, FB_W / 2, 247, PEN.WHITE);
-  fb.textCentered(`RANK: ${rankLabel(g.level, true)}`, FB_W / 2, 266, PEN.HUD1, 'small');
+  const diff = g.difficulty === 'normal' ? '' : `  ${g.difficulty.toUpperCase()}`;
+  fb.textCentered(`RANK: ${rankLabel(g.level, true)}${diff}`, FB_W / 2, 266, PEN.HUD1, 'small');
   if (g.phaseT >= TUNING.cardSkipAfter && (frame & 32)) fb.textCentered('FIRE TO SKIP', FB_W / 2, 284, PEN.STAR2, 'small');
 }
 

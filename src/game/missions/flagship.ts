@@ -82,6 +82,7 @@ export class Flagship implements Mission {
         const side = g.rng.sign();
         const f = g.spawnEnemy('fighter', this.x + side * FLAGSHIP_MISSION.pattern.launchOffset, this.y + 4, 'leaving');
         f.p0 = side;
+        f.p1 = g.rng.range(0, Math.PI * 2); // where its weave starts
       }
     }
     for (const f of fighters) {
@@ -104,8 +105,8 @@ export class Flagship implements Mission {
         break;
       case 'attacking': {
         // Weave down toward the player.
-        f.vx += Math.sign(g.player.x - f.vx) * pt.homing;
-        f.x = clamp(f.vx + pt.weaveAmp * fsin(f.t * pt.weaveRate * f.p0), 4, FB_W - 4);
+        if (f.y < pt.commitY) f.vx += Math.sign(g.player.x - f.vx) * pt.homing;
+        f.x = clamp(f.vx + pt.weaveAmp * fsin(f.t * pt.weaveRate * f.p0 + f.p1), 4, FB_W - 4);
         f.y += sp * 0.8;
         if (f.t % pt.dartEvery === 30 && f.y < 200) g.aimDart(f.x, f.y + 3);
         if (f.y > FB_H + 8) f.alive = false; // gone back to the ship

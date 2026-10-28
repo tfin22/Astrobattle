@@ -233,3 +233,24 @@ checked against documentation.
 - **Patterns as data**: each mission's flight-path numbers (swing sizes,
   loop turn rates, weave widths, breathing, spiral growth) live in
   `content/missions.ts` under `pattern`; speeds and rates in `tuning.ts`.
+
+## Difficulty (after playtest round 1)
+
+- The playtester found round 1 easy, so that tuning is now **Easy**, and
+  **Normal** (the new default) and **Hard** step up from it. Difficulty
+  multiplies the rank scaling in `tuning.ts` (`difficulty` table):
+  Normal = enemies 12% faster, 35% more fire, 25% more dives, lasers charge
+  15% quicker, warp spawns 15% sooner, one more hull row; Hard = 25% / 75% /
+  50% / 28% / 28% / two more rows, and a shorter respawn grace. The laser
+  minimum warning (45 frames) still holds at every level.
+- Measured with the AI pilot (ships lost per full loop, 16 runs a mission):
+  Cadet 3.1 / 4.8 / 5.9, Commander 10.1 / 13.5 / 17.7 (Easy / Normal / Hard).
+  `scripts/difficulty-probe.ts` reruns this.
+- **High scores** keep one table; each entry is tagged with its difficulty
+  (EASY / HARD shown beside it, Normal unmarked). Scores saved before this
+  change have no tag and count as Easy, which is what they were played on.
+- **Fix found while measuring**: the Flagship's fighters steered at you all
+  the way down with the same weave every time, so standing still at one spot
+  was always hit at one speed and never at another. Each fighter now starts
+  its weave at a random point and stops steering below y 190, so a late
+  sidestep always works (as with the Swarm's kamikazes).
