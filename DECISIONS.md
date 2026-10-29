@@ -85,9 +85,12 @@ checked against documentation.
   buffers when audio unlocks (a few ms).
 - **Laser charge** is re-rendered to each laser's exact charge length (it's
   rank-dependent), so the rising tone peaks as the beam fires.
-- **Background pulse**: two alternating low thumps. Shield Wall beats it on
-  every march step (so it speeds up with the block); other missions beat it
-  at an interval that shrinks as enemies thin out.
+- **Background pulse**: two alternating low thumps, at an interval that
+  shrinks as enemies thin out: about 1 a second with a full wave, rising to
+  at most 3.3 a second for the last enemy. (Shield Wall first beat on every
+  march step, which reached ~29 a second for the last fighter; the
+  playtester found that too stressful, so every mission now uses the same
+  capped beat.)
 - A gentle 7 kHz low-pass on the master output: a cabinet speaker, not hi-fi.
 - Audio needs a user gesture on phones: the first tap unlocks it (the coin).
 

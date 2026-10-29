@@ -111,7 +111,8 @@ export const TUNING = {
 
   // ---- Background pulse -------------------------------------------------------------
   pulseSlow: 52,
-  pulseFast: 9,
+  /** Fastest the beat ever gets: frames between thumps (18 = 3.3 a second). */
+  pulseFast: 18,
 
   /**
    * Rank scaling. Index 0 = Cadet ... 5 = Admiral. Applied on top of the
