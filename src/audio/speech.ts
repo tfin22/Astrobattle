@@ -15,6 +15,10 @@ const FRAME = 110; // samples per parameter update (~5 ms)
 const BASE_F0 = 85;
 const PITCH = [0.84, 1.0, 1.17, 1.34];
 const BW = [80, 100, 150];
+/** Frication level. Natural S/SH sit ~8-12 dB under the vowels. */
+const FRIC_GAIN = 0.4;
+/** Stop-consonant bursts relative to their table level. */
+const BURST_GAIN = 0.55;
 
 interface Params {
   f1: number; f2: number; f3: number;
@@ -100,7 +104,7 @@ function targetsAt(tokens: PhonemeToken[], i: number, k: number): Params {
         p.av = ph.kind === 'stop' ? 0 : ph.av * 0.35; // voice bar
         p.f1 = 200;
       } else if (k < burstEnd) {
-        p.af = ph.af;
+        p.af = ph.kind === 'aff' ? ph.af : ph.af * BURST_GAIN;
         p.av = ph.kind === 'stop' ? 0 : ph.av;
       } else {
         // Release into the next sound: aspiration for voiceless stops.
@@ -128,7 +132,7 @@ function findVoiced(tokens: PhonemeToken[], i: number, dir: number): Phoneme | n
 }
 
 /** Synthesise a phoneme string to mono samples at SPEECH_RATE. */
-export function synthesize(phonemes: string): Float32Array {
+export function synthesize(phonemes: string, opts: { raw?: boolean } = {}): Float32Array {
   const tokens = parsePhonemes(phonemes);
   const total = Math.ceil((phonemesMs(tokens) / 1000) * SPEECH_RATE);
   const out = new Float32Array(total);
@@ -196,16 +200,40 @@ export function synthesize(phonemes: string): Float32Array {
       const n = noise();
       const src = buzz * av + n * asp * 0.6;
       const voiced = r5.run(r4.run(r3.run(r2.run(r1.run(src)))));
-      const fric = rf.run(n) * af * 1.4;
+      const fric = rf.run(n) * af * FRIC_GAIN;
       out[s] = voiced + fric;
     }
   }
-  return lofi(out);
+  return opts.raw ? out : lofi(out);
 }
 
-/** Normalise, sample-hold to ~11 kHz and quantise to 7 bits. */
+/** Two-pole low-pass (RBJ biquad), in place. */
+function lowpass(x: Float32Array, fc: number, q = 0.707): void {
+  const w = (2 * Math.PI * fc) / SPEECH_RATE;
+  const al = Math.sin(w) / (2 * q);
+  const cw = Math.cos(w);
+  const a0 = 1 + al;
+  const b0 = (1 - cw) / 2 / a0;
+  const b1 = (1 - cw) / a0;
+  const a1 = (-2 * cw) / a0;
+  const a2 = (1 - al) / a0;
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < x.length; i++) {
+    const y = b0 * x[i] + b1 * x1 + b0 * x2 - a1 * y1 - a2 * y2;
+    x2 = x1;
+    x1 = x[i];
+    y2 = y1;
+    y1 = y;
+    x[i] = y;
+  }
+}
+
+/**
+ * The 1981 speaker: remove DC, even out the loudness gently (no clipping),
+ * band-limit like the old chip's output filter, sample-hold to ~11 kHz for
+ * the grain, smooth the steps, then quantise to 8 bits.
+ */
 function lofi(x: Float32Array): Float32Array {
-  // Remove DC.
   let prevIn = 0;
   let prevOut = 0;
   for (let i = 0; i < x.length; i++) {
@@ -214,17 +242,36 @@ function lofi(x: Float32Array): Float32Array {
     prevOut = y;
     x[i] = y;
   }
-  let peak = 0;
-  for (let i = 0; i < x.length; i++) peak = Math.max(peak, Math.abs(x[i]));
-  const k = peak > 0 ? 0.92 / peak : 1;
+  // Leveller: a slow envelope follower and a mild gain curve (about 1.6:1),
+  // so emphasised syllables and loud consonants don't jump out.
+  const env = new Float32Array(x.length);
+  const att = Math.exp(-1 / (0.008 * SPEECH_RATE));
+  const rel = Math.exp(-1 / (0.09 * SPEECH_RATE));
+  let e = 0;
+  let maxEnv = 0;
+  for (let i = 0; i < x.length; i++) {
+    const a = Math.abs(x[i]);
+    e = a > e ? att * e + (1 - att) * a : rel * e + (1 - rel) * a;
+    env[i] = e;
+    if (e > maxEnv) maxEnv = e;
+  }
+  const ref = maxEnv * 0.45;
+  const floor = maxEnv * 0.05;
+  for (let i = 0; i < x.length; i++) {
+    const v = Math.max(env[i], floor);
+    x[i] *= Math.min(1.8, Math.max(0.55, Math.pow(ref / v, 0.38)));
+  }
+  lowpass(x, 4800);
   let held = 0;
   for (let i = 0; i < x.length; i++) {
-    if ((i & 1) === 0) held = x[i] * k;
-    // Soft clip then 7-bit quantise.
-    const c = Math.tanh(held * 1.3);
-    x[i] = Math.round(c * 64) / 64;
+    if ((i & 1) === 0) held = x[i];
+    x[i] = held;
   }
-  // Fade the last few ms.
+  lowpass(x, 5200);
+  let peak = 0;
+  for (let i = 0; i < x.length; i++) peak = Math.max(peak, Math.abs(x[i]));
+  const k = peak > 0 ? 0.9 / peak : 1;
+  for (let i = 0; i < x.length; i++) x[i] = Math.round(x[i] * k * 128) / 128;
   const fade = Math.min(200, x.length);
   for (let i = 0; i < fade; i++) x[x.length - 1 - i] *= i / fade;
   return x;

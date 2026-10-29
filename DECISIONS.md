@@ -294,3 +294,19 @@ checked against documentation.
   original story (VORG, your orders, the rank ladder) follows, ending on
   "the only way out is through VORG". The title page adds "LOST FOR
   DECADES. FOUND IN 2026."
+
+## Voice clean-up (playtest: "hissy", "jumps in volume")
+
+- Measured per sound class against the average vowel: S/SH/F were +3.8 dB
+  (natural speech has them ~8-12 dB *under* the vowels), voiced fricatives
+  and affricates ~0 dB, T/K/P bursts spiking, and the output stage
+  soft-clipped (tanh) then crushed to 7 bits - the pumping and grit heard
+  as "compression".
+- Now: frication at 0.4 (S/SH -8 dB), stop bursts at 55%, and the output
+  stage is DC removal -> a mild leveller (~1.6:1 envelope follower, 8 ms
+  attack, 90 ms release, gain limited to 0.55-1.8x) -> 4.8 kHz low-pass
+  (like the old chip's output filter) -> 11 kHz sample-hold for the grain
+  -> 5.2 kHz smoothing -> 8-bit quantise. No clipping anywhere.
+- High-frequency hiss index (first-difference energy / energy) 0.52 -> 0.04.
+  Recogniser word score 45% -> 48%. `scripts/speech-levels.ts` re-measures;
+  `tests/voice-quality.test.ts` guards the balance and hiss.
