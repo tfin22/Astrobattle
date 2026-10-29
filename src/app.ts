@@ -22,7 +22,7 @@ import {
   insertScore, scoreRank, defaultScores, type Settings, type ScoreEntry, type Progress,
 } from './platform/storage';
 import { AudioEngine } from './audio/engine';
-import { goFullscreen, haptic, isFullscreen, keepAwake } from './platform/device';
+import { goFullscreen, haptic, isFullscreen, keepAwake, lockOrientation } from './platform/device';
 import { DIFFICULTIES, type GameEvent, type GameMode } from './game/types';
 import type { Enemy } from './game/types';
 import { DebugOverlay } from './debug/overlay';
@@ -125,7 +125,7 @@ export class App {
     this.audio.unlock();
     if (this.input.touchSeen && !this.display.touch) this.onResize();
     if ((this.screen === 'attract' || this.screen === 'menu') && this.input.touchSeen && !isFullscreen()) {
-      void goFullscreen().then(() => this.onResize());
+      void goFullscreen(this.settings.orientation).then(() => this.onResize());
     }
   }
 
@@ -444,6 +444,12 @@ export class App {
     const save = () => { saveSettings(s); this.applySettings(); };
     const toggle = (k: 'holdToFire' | 'dpad' | 'sound' | 'subtitles' | 'crt' | 'bezel' | 'haptics' | 'sharpScreen') => () => { s[k] = !s[k]; save(); };
     const onoff = (v: boolean) => (v ? 'ON' : 'OFF');
+    const flipOrientation = () => {
+      s.orientation = s.orientation === 'portrait' ? 'landscape' : 'portrait';
+      save();
+      // Applies at once where the device allows (fullscreen on Android).
+      if (isFullscreen()) void lockOrientation(s.orientation).then(() => this.onResize());
+    };
     const step = (d: number) => {
       const i = DIFFICULTIES.indexOf(s.difficulty);
       s.difficulty = DIFFICULTIES[Math.max(0, Math.min(DIFFICULTIES.length - 1, i + d))];
@@ -460,6 +466,7 @@ export class App {
         left: () => { s.volume = Math.max(0, s.volume - 0.1); save(); }, right: () => { s.volume = Math.min(1, s.volume + 0.1); save(); } },
       { label: 'SUBTITLES', value: () => onoff(s.subtitles), action: toggle('subtitles'), left: toggle('subtitles'), right: toggle('subtitles') },
       { label: 'SCREEN', value: () => (s.sharpScreen ? 'SHARP' : 'FILL'), action: toggle('sharpScreen'), left: toggle('sharpScreen'), right: toggle('sharpScreen') },
+      { label: 'ORIENTATION', value: () => s.orientation.toUpperCase(), action: flipOrientation, left: flipOrientation, right: flipOrientation },
       { label: 'CRT MODE', value: () => onoff(s.crt), action: toggle('crt'), left: toggle('crt'), right: toggle('crt') },
       { label: 'BEZEL', value: () => onoff(s.bezel), action: toggle('bezel'), left: toggle('bezel'), right: toggle('bezel') },
       { label: 'HAPTICS', value: () => onoff(s.haptics), action: toggle('haptics'), left: toggle('haptics'), right: toggle('haptics') },
@@ -762,7 +769,7 @@ export class App {
         fb.text(b.text, b.x0, y, sel ? PEN.HUD2 : PEN.HUD1);
       }
     });
-    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 252, PEN.STAR2, 'small');
+    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 268, PEN.STAR2, 'small');
   }
 
   private drawPractice(): void {

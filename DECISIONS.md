@@ -331,6 +331,8 @@ checked against documentation.
   this the controls sat underneath, which left a phone held sideways with a
   tiny picture.
 - **Phones upright:** unchanged - picture on top, controls below.
-- Going fullscreen still locks Android phones to portrait, as the spec
-  asks; the sideways layout is for tablets, desktop browsers and phones
-  that aren't fullscreen.
+- **Settings -> Orientation: Portrait / Landscape.** Portrait (the spec's
+  default) or landscape is locked when the game goes fullscreen, where the
+  device allows it (Android Chrome); changing it while fullscreen applies
+  at once. Where locking isn't supported (iOS, or not fullscreen) the
+  layout just follows how the device is held.

@@ -9,6 +9,8 @@ export interface Settings {
   difficulty: Difficulty;
   /** Fill the screen (bigger) or keep whole-number scaling (sharper). */
   sharpScreen: boolean;
+  /** Which way to lock the screen in fullscreen, where the device allows. */
+  orientation: 'portrait' | 'landscape';
   startShips: number;     // 3..5
   holdToFire: boolean;
   dpad: boolean;
@@ -23,6 +25,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   difficulty: 'normal',
   sharpScreen: false,
+  orientation: 'portrait',
   startShips: 3,
   holdToFire: false,
   dpad: false,
@@ -73,6 +76,7 @@ function write<T>(key: string, data: T): void {
 export function loadSettings(): Settings {
   const s = { ...DEFAULT_SETTINGS, ...(read<Partial<Settings>>(KEYS.settings) ?? {}) };
   if (!['easy', 'normal', 'hard'].includes(s.difficulty)) s.difficulty = 'normal';
+  if (s.orientation !== 'portrait' && s.orientation !== 'landscape') s.orientation = 'portrait';
   return s;
 }
 export function saveSettings(s: Settings): void {
