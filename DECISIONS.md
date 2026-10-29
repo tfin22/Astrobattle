@@ -38,9 +38,15 @@ checked against documentation.
 - **Debug key.** The spec asks for both WASD movement and "D for debug". Plain
   D moves right; **Shift+D** (or the backquote key) toggles the debug overlay.
   Three fingers on the touchscreen at once also toggles it.
-- **Layout.** Picture on top, integer-scaled when the integer size is at least
-  86% of the best fit; otherwise nearest-neighbour at the best fractional
-  scale (small phones). All remaining height below the picture is the control
+- **Layout.** Picture on top. By default it **fills** the space
+  (nearest-neighbour at a fractional scale: at phone pixel densities the odd
+  pixel that is one device pixel wider can't be seen). Playtest: on a
+  390x844 phone whole-number (5x) scaling left 13% of the width empty and
+  made everything look small - though measured against a frame of the 1981
+  game our sprites are the same size in pixels (its invaders 11-12 px on a
+  16 px pitch, ours 11 on 14). Filling makes them ~15% bigger. Settings ->
+  SCREEN: SHARP restores whole-number scaling (used when within 86% of the
+  fit). All remaining height below the picture is the control
   panel (at least 180 CSS px). Without a touchscreen the picture is centred
   and no controls are drawn.
 
@@ -85,9 +91,12 @@ checked against documentation.
   buffers when audio unlocks (a few ms).
 - **Laser charge** is re-rendered to each laser's exact charge length (it's
   rank-dependent), so the rising tone peaks as the beam fires.
-- **Background pulse**: two alternating low thumps. Shield Wall beats it on
-  every march step (so it speeds up with the block); other missions beat it
-  at an interval that shrinks as enemies thin out.
+- **Background pulse**: two alternating low thumps, at an interval that
+  shrinks as enemies thin out: about 1 a second with a full wave, rising to
+  at most 3.3 a second for the last enemy. (Shield Wall first beat on every
+  march step, which reached ~29 a second for the last fighter; the
+  playtester found that too stressful, so every mission now uses the same
+  capped beat.)
 - A gentle 7 kHz low-pass on the master output: a cabinet speaker, not hi-fi.
 - Audio needs a user gesture on phones: the first tap unlocks it (the coin).
 
@@ -310,3 +319,54 @@ checked against documentation.
 - High-frequency hiss index (first-difference energy / energy) 0.52 -> 0.04.
   Recogniser word score 45% -> 48%. `scripts/speech-levels.ts` re-measures;
   `tests/voice-quality.test.ts` guards the balance and hiss.
+
+## Screen shapes
+
+- **Monitors / desktop (no touch):** the picture runs full height in the
+  middle, like the 1981 cabinet's vertical monitor, and the sides become
+  cabinet art (`render/sideArt.ts`, all drawn in code): a brick wall with the
+  VORF26 logo in neon pixel lettering and a controls card with drawn
+  keycaps on the left; 80s graffiti on the right (VORG WAS HERE, KOP END,
+  LFC, GAME ON!, a VORG sticker, the current high score) and a blinking
+  INSERT COIN neon sign. Drawn once per resize and cached; only the sign
+  redraws. Shown when each side has at least 170 CSS px; narrower windows
+  keep plain black. The bezel setting now adds just its trim lines there.
+- **Touch detection:** devices whose main pointer is a finger start with the
+  thumb controls; everything else (including touchscreen laptops) starts in
+  keyboard mode with the side art and switches to thumb controls on the
+  first touch.
+- **Touchscreens held sideways (tablets, phones in a browser):** handheld
+  layout - picture full height in the middle, the stick's area is the whole
+  left side, FIRE the whole right side (each at least 150 CSS px). Before
+  this the controls sat underneath, which left a phone held sideways with a
+  tiny picture.
+- **Phones upright:** unchanged - picture on top, controls below.
+- **Settings -> Orientation: Portrait / Landscape.** Portrait (the spec's
+  default) or landscape is locked when the game goes fullscreen, where the
+  device allows it (Android Chrome); changing it while fullscreen applies
+  at once. Where locking isn't supported (iOS, or not fullscreen) the
+  layout just follows how the device is held.
+
+## Keyboard: one button
+
+- Playtest: separate coin (5) and start (1) keys were clunky. FIRE now does
+  everything - Space, Z or Enter fire in play, select in menus, and insert
+  the coin on the title ("FIRE TO INSERT COIN" on keyboard screens, "TAP TO
+  INSERT COIN" on touchscreens). 5 and 1 still work but are no longer shown.
+  `scripts/keyboard-test.mjs` plays from the title into a game with fire keys
+  only.
+
+## Name and side art, toned down
+
+- The name is now **VORG26** (the villain's name works better as a title);
+  `GAME_TITLE` in `content/text.ts`, so scroll, title screens, marquee,
+  page title and app name all follow.
+- The side art competed with the game (measured on a 1920x1080 screenshot:
+  walls 5-7x the game picture's brightness and 3x as colourful). It is now
+  drawn in three layers, each dimmed over black and partly desaturated
+  (`DIM` in `render/sideArt.ts`): the wall and graffiti hardest (alpha 0.24,
+  50% desaturated), the logo less, the controls card least so it stays
+  readable; keycaps are grey rather than white. Result: walls 12-21 vs the
+  game's 7, and no more colourful than the game. The INSERT COIN sign only
+  blinks while the machine is idle; during play it stays lit and dim.
+  `scripts/side-brightness.py` re-measures.

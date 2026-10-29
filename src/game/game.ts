@@ -72,6 +72,7 @@ export class Game {
   private nextId = 1;
   private pulseT = 0;
   private beat = 0;
+  private lastPulse = -1000;
   private saucerT: number = TUNING.saucerEvery;
   private nearMissCooldown = 0;
 
@@ -505,8 +506,10 @@ export class Game {
     this.pulse();
   }
 
-  /** One beat of the background pulse. */
+  /** One beat of the background pulse, never closer than pulseFast frames. */
   pulse(): void {
+    if (this.frame - this.lastPulse < TUNING.pulseFast) return;
+    this.lastPulse = this.frame;
     this.beat ^= 1;
     this.events.push({ t: 'pulse', beat: this.beat });
   }

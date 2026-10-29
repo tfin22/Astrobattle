@@ -22,7 +22,7 @@ import {
   insertScore, scoreRank, defaultScores, type Settings, type ScoreEntry, type Progress,
 } from './platform/storage';
 import { AudioEngine } from './audio/engine';
-import { goFullscreen, haptic, isFullscreen, keepAwake } from './platform/device';
+import { goFullscreen, haptic, isFullscreen, keepAwake, lockOrientation } from './platform/device';
 import { DIFFICULTIES, type GameEvent, type GameMode } from './game/types';
 import type { Enemy } from './game/types';
 import { DebugOverlay } from './debug/overlay';
@@ -94,7 +94,10 @@ export class App {
     this.progress = loadProgress();
     this.appVorg = new Vorg(new Rng((Date.now() ^ 0x5eed) >>> 0), (_t, line) => this.onSay(line));
     this.debug = new DebugOverlay(this);
-    this.display.touch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    // A finger-first device starts with the thumb controls; anything else
+    // (monitors, laptops, even touchscreen laptops) starts in keyboard mode and
+    // switches to the thumb controls the moment the screen is touched.
+    this.display.touch = matchMedia('(pointer: coarse)').matches;
     this.applySettings();
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
@@ -125,13 +128,17 @@ export class App {
     this.audio.unlock();
     if (this.input.touchSeen && !this.display.touch) this.onResize();
     if ((this.screen === 'attract' || this.screen === 'menu') && this.input.touchSeen && !isFullscreen()) {
-      void goFullscreen().then(() => this.onResize());
+      void goFullscreen(this.settings.orientation).then(() => this.onResize());
     }
   }
 
   applySettings(): void {
     this.display.crt = this.settings.crt;
     this.display.bezel = this.settings.bezel;
+    if (this.display.sharp !== this.settings.sharpScreen) {
+      this.display.sharp = this.settings.sharpScreen;
+      if (this.input.layout) this.onResize();
+    }
     this.input.dpadMode = this.settings.dpad;
     this.audio.apply(this.settings.sound, this.settings.volume);
   }
@@ -438,8 +445,14 @@ export class App {
   settingsItems(): MenuItem[] {
     const s = this.settings;
     const save = () => { saveSettings(s); this.applySettings(); };
-    const toggle = (k: 'holdToFire' | 'dpad' | 'sound' | 'subtitles' | 'crt' | 'bezel' | 'haptics') => () => { s[k] = !s[k]; save(); };
+    const toggle = (k: 'holdToFire' | 'dpad' | 'sound' | 'subtitles' | 'crt' | 'bezel' | 'haptics' | 'sharpScreen') => () => { s[k] = !s[k]; save(); };
     const onoff = (v: boolean) => (v ? 'ON' : 'OFF');
+    const flipOrientation = () => {
+      s.orientation = s.orientation === 'portrait' ? 'landscape' : 'portrait';
+      save();
+      // Applies at once where the device allows (fullscreen on Android).
+      if (isFullscreen()) void lockOrientation(s.orientation).then(() => this.onResize());
+    };
     const step = (d: number) => {
       const i = DIFFICULTIES.indexOf(s.difficulty);
       s.difficulty = DIFFICULTIES[Math.max(0, Math.min(DIFFICULTIES.length - 1, i + d))];
@@ -455,6 +468,8 @@ export class App {
       { label: 'VOLUME', value: () => String(Math.round(s.volume * 10)), action: () => { s.volume = s.volume >= 1 ? 0.1 : Math.min(1, s.volume + 0.1); save(); },
         left: () => { s.volume = Math.max(0, s.volume - 0.1); save(); }, right: () => { s.volume = Math.min(1, s.volume + 0.1); save(); } },
       { label: 'SUBTITLES', value: () => onoff(s.subtitles), action: toggle('subtitles'), left: toggle('subtitles'), right: toggle('subtitles') },
+      { label: 'SCREEN', value: () => (s.sharpScreen ? 'SHARP' : 'FILL'), action: toggle('sharpScreen'), left: toggle('sharpScreen'), right: toggle('sharpScreen') },
+      { label: 'ORIENTATION', value: () => s.orientation.toUpperCase(), action: flipOrientation, left: flipOrientation, right: flipOrientation },
       { label: 'CRT MODE', value: () => onoff(s.crt), action: toggle('crt'), left: toggle('crt'), right: toggle('crt') },
       { label: 'BEZEL', value: () => onoff(s.bezel), action: toggle('bezel'), left: toggle('bezel'), right: toggle('bezel') },
       { label: 'HAPTICS', value: () => onoff(s.haptics), action: toggle('haptics'), left: toggle('haptics'), right: toggle('haptics') },
@@ -552,6 +567,9 @@ export class App {
       drawSubtitle(fb, this.appVorg.current.text, FB_H - 30);
     }
     this.lastLook = look;
+    const top = this.scores[0];
+    if (top) this.display.sideInfo = { hiName: top.initials, hiScore: top.score };
+    this.display.sideIdle = this.screen !== 'game' && this.screen !== 'continue';
     buildLineMap(fb.lineMap, look, this.frame, ov);
     this.debug.drawInFramebuffer(fb);
     if (this.debug.visible || this.debug.justClosed) {
@@ -560,6 +578,11 @@ export class App {
     }
     this.display.present(fb, this.input, true);
     this.debug.drawOnScreen(this.display);
+  }
+
+  /** What the attract screens ask for: a tap on touchscreens, FIRE elsewhere. */
+  get coinPrompt(): string {
+    return this.display.touch ? 'TAP TO INSERT COIN' : 'FIRE TO INSERT COIN';
   }
 
   get look(): Look {
@@ -588,7 +611,7 @@ export class App {
       const r = drawGame(fb, this.demo, this.stars, this.frame, { hiScore: this.scores[0]?.score ?? 0, showPause: false }, false);
       fb.rect(56, 150, 92, 14, PEN.BLACK);
       fb.textCentered('DEMO', FB_W / 2, 154, PEN.HUD1);
-      if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 200, PEN.WHITE);
+      if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 200, PEN.WHITE);
       return r.look;
     }
     this.header();
@@ -596,7 +619,7 @@ export class App {
       case 'story': {
         // The opening scroll climbs up under a fixed title.
         fb.textCentered(GAME_TITLE, FB_W / 2, 16, PEN.HUD2, 'big', 3);
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 44, PEN.WHITE);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 44, PEN.WHITE);
         const top = 60;
         const y0 = FB_H - 8 - this.screenT * STORY_SPEED;
         STORY.forEach(([text, style], i) => {
@@ -611,7 +634,7 @@ export class App {
         this.drawLogo(64);
         fb.textCentered('LOST FOR DECADES. FOUND IN 2026.', FB_W / 2, 140, PEN.STAR2, 'small');
         drawVorgFace(fb, FB_W / 2, 190, 0, 1);
-        if (blink) fb.textCentered(this.display.touch ? 'TAP TO INSERT COIN' : 'INSERT COIN', FB_W / 2, 236, PEN.WHITE);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 236, PEN.WHITE);
         fb.textCentered('VORG IS WATCHING', FB_W / 2, 290, PEN.STAR2, 'small');
         break;
       }
@@ -623,12 +646,12 @@ export class App {
         drawVorgFace(fb, FB_W / 2, 142, mouth, 4);
         const text = cur?.text ?? this.appVorg.log[this.appVorg.log.length - 1]?.text ?? '';
         wrapText(text, FB_W - 16).forEach((l, i) => fb.textCentered(l, FB_W / 2, 214 + i * 11, PEN.WHITE));
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 270, PEN.HUD2);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 270, PEN.HUD2);
         break;
       }
       case 'scores':
         this.drawScoreTable(40);
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 290, PEN.WHITE);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 290, PEN.WHITE);
         break;
       case 'table':
         this.drawScoringTable();
@@ -757,7 +780,7 @@ export class App {
         fb.text(b.text, b.x0, y, sel ? PEN.HUD2 : PEN.HUD1);
       }
     });
-    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 238, PEN.STAR2, 'small');
+    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 268, PEN.STAR2, 'small');
   }
 
   private drawPractice(): void {

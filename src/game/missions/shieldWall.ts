@@ -13,7 +13,6 @@ import type { Bullet, Enemy } from '../types';
  */
 export class ShieldWall implements Mission {
   readonly id = 'shieldWall' as const;
-  readonly ownPulse = true;
   /** 1 = force field present. Full-screen mask for simple indexing. */
   readonly field = new Uint8Array(FB_W * FB_H);
   fieldTop = 0;
@@ -150,7 +149,6 @@ export class ShieldWall implements Mission {
       e.x = this.originX + e.hx;
       e.y = this.originY + e.hy;
     }
-    g.pulse();
     this.bombs(g, form);
   }
 

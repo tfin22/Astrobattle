@@ -234,16 +234,17 @@ export class InputManager {
     my = my || this.stickDir.y || this.padDir.y;
     mx = Math.sign(mx);
     my = Math.sign(my);
-    const keyFire = kp.has(' ') || kp.has('z');
+    // Space, Z and Enter are all FIRE, which also selects on every screen.
+    const keyFire = kp.has(' ') || kp.has('z') || kp.has('Enter');
     const fire = keyFire || this.firePresses > 0 || this.padFirePresses > 0;
-    const fireHeld = k.has(' ') || k.has('z') || this.fireIds.size > 0 || this.padHeld;
+    const fireHeld = k.has(' ') || k.has('z') || k.has('Enter') || this.fireIds.size > 0 || this.padHeld;
     const dir = { x: mx, y: my };
     const out: AppInput = {
       mx,
       my,
       fire,
       fireHeld,
-      start: kp.has('1') || kp.has('Enter') || this.padStart,
+      start: kp.has('1') || this.padStart,
       coin: kp.has('5') || this.padCoin,
       pause: kp.has('p') || kp.has('Escape'),
       debug: kp.has('debug') || this.debugRequested,

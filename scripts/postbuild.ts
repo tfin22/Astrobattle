@@ -72,8 +72,8 @@ fs.writeFileSync('dist/icon-192.png', png(192));
 fs.writeFileSync('dist/icon-512.png', png(512));
 
 const manifest = {
-  name: 'VORF26',
-  short_name: 'VORF26',
+  name: 'VORG26',
+  short_name: 'VORG26',
   description: 'A lost arcade treasure, rediscovered. VORG is waiting.',
   start_url: './',
   scope: './',
@@ -91,7 +91,7 @@ fs.writeFileSync('dist/manifest.webmanifest', JSON.stringify(manifest, null, 2))
 // Service worker: cache everything up front, serve from cache (offline),
 // refresh the cache in the background when online.
 const version = crypto.createHash('sha1').update(html).digest('hex').slice(0, 10);
-const sw = `// VORF26 offline cache (generated).
+const sw = `// VORG26 offline cache (generated).
 const CACHE = 'qc-${version}';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => {

@@ -1,4 +1,4 @@
-# VORF26
+# VORG26
 
 A lost arcade treasure, rediscovered: an homage to Gorf (1981), for phones
 in portrait. (Developed under the working title Quantum Cadet, which lives
@@ -12,8 +12,8 @@ Open `dist/index.html` on a phone (or any browser). It's one self-contained
 file: no install, no server, works offline. Left thumb moves, right thumb
 fires; tap the title screen to insert a coin.
 
-Desktop keys: arrows/WASD move, Space or Z fire, P pause, 5 coin, 1 start,
-Shift+D debug overlay.
+Desktop keys: arrows/WASD move; Space, Z or Enter fire (and select, and
+insert coins); P pause; Shift+D debug overlay.
 
 ## Develop
 

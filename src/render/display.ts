@@ -2,6 +2,7 @@ import { FB_H, FB_W, type Framebuffer } from './framebuffer';
 import { computeLayout, type Layout } from './layout';
 import type { InputManager } from '../platform/input';
 import { GAME_TITLE } from '../content/text';
+import { SideArt, sideArtPanels, type SideInfo } from './sideArt';
 
 /**
  * Puts the framebuffer on the real screen. The 204x320 picture lives in its
@@ -25,10 +26,16 @@ export class Display {
   crt = false;
   bezel = false;
   touch = false;
+  /** Whole-number scaling only (the Sharp screen setting). */
+  sharp = false;
+  /** What the side art shows (top of the high-score table). */
+  sideInfo: SideInfo = { hiName: 'AAM', hiScore: 20000 };
+  private sideArt = new SideArt();
+  /** True on attract/menu screens (the side sign may blink); false in play. */
+  sideIdle = true;
   /** Set when something outside the controls (debug) draws on the UI layer. */
   uiDirty = true;
   private uiKey = '';
-  private panel: HTMLCanvasElement | null = null;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext('2d')!;
@@ -66,7 +73,7 @@ export class Display {
     const cssW = window.innerWidth;
     const cssH = window.innerHeight;
     const dpr = Math.min(window.devicePixelRatio || 1, 4);
-    const l = (this.layout = computeLayout(cssW, cssH, dpr, this.touch));
+    const l = (this.layout = computeLayout(cssW, cssH, dpr, this.touch, this.sharp));
     this.canvas.width = l.devW;
     this.canvas.height = l.devH;
     this.canvas.style.width = cssW + 'px';
@@ -78,7 +85,6 @@ export class Display {
       c.style.height = l.play.h / dpr + 'px';
     }
     this.buildCrtLayer();
-    this.panel = null;
     this.uiDirty = true;
   }
 
@@ -118,29 +124,34 @@ export class Display {
     const key = input
       ? `${s!.active ? 1 : 0}${Math.round(s!.ox)},${Math.round(s!.oy)},${Math.round(s!.kx)},${Math.round(s!.ky)}|${input.firePressedVisual ? 1 : 0}|${input.dpadMode ? 1 : 0}|${showControls ? 1 : 0}|${this.bezel ? 1 : 0}`
       : 'none';
-    if (!this.uiDirty && key === this.uiKey) return;
-    this.uiKey = key;
+    // Side art on keyboard screens, with a neon sign that blinks.
+    const art = sideArtPanels(this.layout) !== null;
+    // The neon sign blinks only while the machine is idle, never during play.
+    const blink = art ? (this.sideIdle ? Math.floor(performance.now() / 650) % 2 === 0 : true) : false;
+    const fullKey = `${key}|${art ? 1 : 0}|${blink ? 1 : 0}|${this.sideInfo.hiName}${this.sideInfo.hiScore}`;
+    if (!this.uiDirty && fullKey === this.uiKey) return;
+    this.uiKey = fullKey;
     this.uiDirty = false;
     const { ctx, layout: l } = this;
     ctx.clearRect(0, 0, l.devW, l.devH);
-    if (this.bezel) this.drawBezel();
+    if (art) this.sideArt.draw(ctx, l, this.sideInfo, blink);
+    if (art) ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
+    if (this.bezel) this.drawBezel(art);
     if (l.controls.h > 0 && input) this.drawControls(input, showControls);
   }
 
-  private drawBezel(): void {
+  private drawBezel(trimOnly = false): void {
     const { ctx, layout: l } = this;
-    const side = l.play.x;
     const top = l.play.y;
-    if (side < 4 && top < 4) {
-      // Thin trim only when there's no margin to fill.
-    }
     const grad = ctx.createLinearGradient(0, 0, l.devW, 0);
     grad.addColorStop(0, '#120a1e');
     grad.addColorStop(0.5, '#05030a');
     grad.addColorStop(1, '#120a1e');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, l.devW, l.play.y + l.play.h);
-    ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
+    if (!trimOnly) {
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, l.devW, l.play.y + l.play.h);
+      ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
+    }
     const t = Math.max(2, Math.round(l.dpr * 2));
     ctx.fillStyle = '#e0306a';
     ctx.fillRect(l.play.x - t * 2, l.play.y, t, l.play.h);
@@ -169,22 +180,24 @@ export class Display {
     const { ctx, layout: l } = this;
     const c = l.controls;
     const d = l.dpr;
-    // The control panel background, cached.
-    if (!this.panel) {
-      const p = document.createElement('canvas');
-      p.width = c.w;
-      p.height = c.h;
-      const x = p.getContext('2d')!;
-      const g = x.createLinearGradient(0, 0, 0, c.h);
+    // The control panel: behind each thumb area, with a trim line on the
+    // edge that meets the picture.
+    for (const z of [l.stickZone, l.fireZone]) {
+      if (z.w <= 0 || z.h <= 0) continue;
+      const g = ctx.createLinearGradient(0, z.y, 0, z.y + z.h);
       g.addColorStop(0, '#16101f');
       g.addColorStop(1, '#07050b');
-      x.fillStyle = g;
-      x.fillRect(0, 0, c.w, c.h);
-      x.fillStyle = '#e0306a';
-      x.fillRect(0, 0, c.w, Math.max(1, Math.round(d * 1.5)));
-      this.panel = p;
+      ctx.fillStyle = g;
+      ctx.fillRect(z.x, z.y, z.w, z.h);
     }
-    ctx.drawImage(this.panel, c.x, c.y);
+    ctx.fillStyle = '#e0306a';
+    const t = Math.max(1, Math.round(d * 1.5));
+    if (l.mode === 'sides') {
+      ctx.fillRect(l.play.x - t, 0, t, l.devH);
+      ctx.fillRect(l.play.x + l.play.w, 0, t, l.devH);
+    } else {
+      ctx.fillRect(c.x, c.y, c.w, t);
+    }
     if (!show) return;
 
     // Stick (or d-pad).
@@ -217,8 +230,8 @@ export class Display {
       ctx.arc(s.kx, s.ky, 20 * d, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      const x = l.stickZone.x + l.stickZone.w * 0.45;
-      const y = l.fire.y;
+      const x = l.stickHint.x;
+      const y = l.stickHint.y;
       ctx.strokeStyle = 'rgba(90,209,255,0.22)';
       ctx.lineWidth = 2 * d;
       ctx.beginPath();

@@ -1,9 +1,11 @@
-/** Fullscreen, portrait lock, wake lock and haptics, all best-effort. */
+/** Fullscreen, orientation lock, wake lock and haptics, all best-effort. */
+
+export type Orientation = 'portrait' | 'landscape';
 export function isFullscreen(): boolean {
   return !!(document.fullscreenElement || (document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement);
 }
 
-export async function goFullscreen(): Promise<void> {
+export async function goFullscreen(orientation: Orientation = 'portrait'): Promise<void> {
   if (isFullscreen()) return;
   const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
   try {
@@ -12,11 +14,20 @@ export async function goFullscreen(): Promise<void> {
   } catch {
     /* refused: carry on windowed */
   }
+  await lockOrientation(orientation);
+}
+
+/**
+ * Lock the screen to portrait or landscape. Only some browsers allow it, and
+ * usually only in fullscreen (Android Chrome); elsewhere it quietly does
+ * nothing and the layout simply follows how the device is held.
+ */
+export async function lockOrientation(orientation: Orientation): Promise<void> {
   try {
     const o = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
-    await o.lock?.('portrait');
+    await o.lock?.(orientation);
   } catch {
-    /* not supported (e.g. iOS) */
+    /* not supported here (e.g. iOS, or not fullscreen) */
   }
 }
 
