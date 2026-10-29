@@ -1,4 +1,4 @@
-import { FB_W, FB_H, Framebuffer, wrapText } from './render/framebuffer';
+import { FB_W, FB_H, Framebuffer, textWidth, wrapText } from './render/framebuffer';
 import { Display } from './render/display';
 import { InputManager, type AppInput } from './platform/input';
 import { FixedLoop } from './core/loop';
@@ -44,6 +44,15 @@ const SCORES_PAGE = ATTRACT.findIndex((p) => p.page === 'scores');
 const DEMO_SEED = 19810101;
 const DEMO_SEGMENT = 480;
 const INITIAL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ.-!* ';
+
+/** Where a settings value "< value >" is drawn, right-aligned. */
+function valueBox(value: string): { text: string; x0: number; x1: number; mid: number } {
+  const text = `< ${value} >`;
+  const w = textWidth(text);
+  const x1 = FB_W - 8;
+  const x0 = x1 - w;
+  return { text, x0, x1, mid: (x0 + x1) / 2 };
+}
 
 interface MenuItem { label: string; action: () => void; value?: () => string; left?: () => void; right?: () => void }
 
@@ -282,8 +291,11 @@ export class App {
         this[key] = i;
         this.audio.sfx('tick');
         const it = items[i];
-        if (it.right && t.x > FB_W * 0.62) it.right();
-        else if (it.left && t.x < FB_W * 0.38) it.left();
+        // A value shows "< value >": its left half steps down, its right
+        // half steps up; tapping the label just picks/cycles it.
+        const box = it.value ? valueBox(it.value()) : null;
+        if (box && it.left && t.x >= box.x0 - 8 && t.x < box.mid) it.left();
+        else if (box && it.right && t.x >= box.mid) it.right();
         else it.action();
         return;
       }
@@ -491,7 +503,8 @@ export class App {
       const i = Math.floor((t.y - 84) / 32);
       if (i >= 0 && i < 4) {
         p.sel = i;
-        if (i < 2 && t.x < FB_W * 0.3) change(-1);
+        // Mission and rank show "< value >" centred: left half back, right half on.
+        if (i < 2) change(t.x < FB_W / 2 ? -1 : 1);
         else act();
       }
     }
@@ -740,11 +753,11 @@ export class App {
       const sel = i === this.settingsSel;
       fb.text(it.label, 12, y, sel ? PEN.HUD2 : PEN.WHITE);
       if (it.value) {
-        const v = `< ${it.value()} >`;
-        fb.text(v, FB_W - 10 - v.length * 8 + 6, y, sel ? PEN.HUD2 : PEN.HUD1);
+        const b = valueBox(it.value());
+        fb.text(b.text, b.x0, y, sel ? PEN.HUD2 : PEN.HUD1);
       }
     });
-    fb.textCentered('TAP A SIDE TO CHANGE A VALUE', FB_W / 2, 238, PEN.STAR2, 'small');
+    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 238, PEN.STAR2, 'small');
   }
 
   private drawPractice(): void {
