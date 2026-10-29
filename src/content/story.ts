@@ -5,7 +5,7 @@ import { GAME_TITLE } from './text';
  * The attract-mode scroll, shown after the title. Original text.
  * Each line: [text, style]. '' is a blank line. Max 25 characters a line.
  */
-export type StoryStyle = 'body' | 'head' | 'rank';
+export type StoryStyle = 'body' | 'head' | 'rank' | 'title';
 
 export const STORY: [string, StoryStyle][] = [
   ['A HIDDEN TREASURE', 'head'],
