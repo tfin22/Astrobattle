@@ -1,0 +1,11 @@
+// Cloudflare deploy: the game is a static site, so this is an assets-only
+// Worker serving the built dist/ folder (index.html plus the optional PWA
+// files). With this file present, `npx wrangler deploy` deploys directly
+// instead of trying to auto-configure the project.
+{
+  "name": "astrobattle",
+  "compatibility_date": "2026-10-23",
+  "assets": {
+    "directory": "./dist"
+  }
+}

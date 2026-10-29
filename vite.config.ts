@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
 export default defineConfig({
@@ -14,4 +14,4 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     testTimeout: 120_000,
   },
-} as never);
+});

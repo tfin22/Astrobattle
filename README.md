@@ -49,3 +49,10 @@ line, sprite viewer, and the seed.
 `scripts/` has the headless checks used during development: screenshots and
 contact sheets, a real-touch test at 390x844, a throttled performance test
 of the busiest moment, an offline test, and a renderer for VORG's lines.
+
+## Deploy (Cloudflare)
+
+`wrangler.jsonc` makes this an assets-only Worker serving `dist/`. With the
+build command `npm run build` and the deploy command `npx wrangler deploy`,
+Cloudflare builds and publishes it as is. Served over https, the game can
+also be installed to a home screen and works offline.
