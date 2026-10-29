@@ -126,7 +126,8 @@ export const TRIGGERS: Record<string, Trigger> = {
       { text: 'ONE SHOT. HOW QUAINT.', ph: 'W AH1 N | SH AA2 T . HH AW1 | K W EY2 N T' },
       { text: 'AIM IS A SKILL. LEARN IT.', ph: 'EY1 M | IH Z | AH | S K IH2 L . L ER1 N | IH T' },
       { text: 'THE STARS THANK YOU.', ph: 'DH AH | S T AA1 R Z | TH AE2 NG K | Y UW' },
-      { text: 'MISSING IS FREE. ENJOY.', ph: 'M IH1 S IH NG | IH Z | F R IY2 . EH N JH OY1' },
+      // Easter egg, for a Liverpool fan.
+      { text: 'YOU SHOOT LIKE MAN UNITED.', ph: 'Y UW | SH UW1 T | L AY K | M AE2 N | Y UW N AY1 T IH D .' },
       { text: 'VORG FEELS NOTHING.', ph: `${VORG} | F IY1 L Z | N AH2 TH IH NG` },
     ],
   },
