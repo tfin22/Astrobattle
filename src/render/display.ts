@@ -2,6 +2,7 @@ import { FB_H, FB_W, type Framebuffer } from './framebuffer';
 import { computeLayout, type Layout } from './layout';
 import type { InputManager } from '../platform/input';
 import { GAME_TITLE } from '../content/text';
+import { SideArt, sideArtPanels, type SideInfo } from './sideArt';
 
 /**
  * Puts the framebuffer on the real screen. The 204x320 picture lives in its
@@ -27,6 +28,9 @@ export class Display {
   touch = false;
   /** Whole-number scaling only (the Sharp screen setting). */
   sharp = false;
+  /** What the side art shows (top of the high-score table). */
+  sideInfo: SideInfo = { hiName: 'AAM', hiScore: 20000 };
+  private sideArt = new SideArt();
   /** Set when something outside the controls (debug) draws on the UI layer. */
   uiDirty = true;
   private uiKey = '';
@@ -118,29 +122,33 @@ export class Display {
     const key = input
       ? `${s!.active ? 1 : 0}${Math.round(s!.ox)},${Math.round(s!.oy)},${Math.round(s!.kx)},${Math.round(s!.ky)}|${input.firePressedVisual ? 1 : 0}|${input.dpadMode ? 1 : 0}|${showControls ? 1 : 0}|${this.bezel ? 1 : 0}`
       : 'none';
-    if (!this.uiDirty && key === this.uiKey) return;
-    this.uiKey = key;
+    // Side art on keyboard screens, with a neon sign that blinks.
+    const art = sideArtPanels(this.layout) !== null;
+    const blink = art ? Math.floor(performance.now() / 650) % 2 === 0 : false;
+    const fullKey = `${key}|${art ? 1 : 0}|${blink ? 1 : 0}|${this.sideInfo.hiName}${this.sideInfo.hiScore}`;
+    if (!this.uiDirty && fullKey === this.uiKey) return;
+    this.uiKey = fullKey;
     this.uiDirty = false;
     const { ctx, layout: l } = this;
     ctx.clearRect(0, 0, l.devW, l.devH);
-    if (this.bezel) this.drawBezel();
+    if (art) this.sideArt.draw(ctx, l, this.sideInfo, blink);
+    if (art) ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
+    if (this.bezel) this.drawBezel(art);
     if (l.controls.h > 0 && input) this.drawControls(input, showControls);
   }
 
-  private drawBezel(): void {
+  private drawBezel(trimOnly = false): void {
     const { ctx, layout: l } = this;
-    const side = l.play.x;
     const top = l.play.y;
-    if (side < 4 && top < 4) {
-      // Thin trim only when there's no margin to fill.
-    }
     const grad = ctx.createLinearGradient(0, 0, l.devW, 0);
     grad.addColorStop(0, '#120a1e');
     grad.addColorStop(0.5, '#05030a');
     grad.addColorStop(1, '#120a1e');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, l.devW, l.play.y + l.play.h);
-    ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
+    if (!trimOnly) {
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, l.devW, l.play.y + l.play.h);
+      ctx.clearRect(l.play.x, l.play.y, l.play.w, l.play.h);
+    }
     const t = Math.max(2, Math.round(l.dpr * 2));
     ctx.fillStyle = '#e0306a';
     ctx.fillRect(l.play.x - t * 2, l.play.y, t, l.play.h);

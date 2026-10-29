@@ -7,6 +7,8 @@ const { chromium } = require(process.env.PW_PATH ?? 'playwright');
 const shapes = [
   { name: 'monitor-1920x1080', w: 1920, h: 1080, dpr: 1, touch: false, setup: '' },
   { name: 'monitor-bezel', w: 1920, h: 1080, dpr: 1, touch: false, setup: "__qc.app.settings.bezel=true; __qc.app.applySettings();" },
+  { name: 'laptop-1366x768', w: 1366, h: 768, dpr: 1, touch: false, setup: '' },
+  { name: 'narrow-window', w: 700, h: 900, dpr: 1, touch: false, setup: '' },
   { name: 'tablet-landscape', w: 1180, h: 820, dpr: 2, touch: true, setup: '' },
   { name: 'phone-landscape', w: 844, h: 390, dpr: 3, touch: true, setup: '' },
 ];

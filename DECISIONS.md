@@ -323,8 +323,18 @@ checked against documentation.
 ## Screen shapes
 
 - **Monitors / desktop (no touch):** the picture runs full height in the
-  middle with black either side, like the 1981 cabinet's vertical monitor.
-  The bezel setting tints the side bars and adds trim.
+  middle, like the 1981 cabinet's vertical monitor, and the sides become
+  cabinet art (`render/sideArt.ts`, all drawn in code): a brick wall with the
+  VORF26 logo in neon pixel lettering and a controls card with drawn
+  keycaps on the left; 80s graffiti on the right (VORG WAS HERE, KOP END,
+  LFC, GAME ON!, a VORG sticker, the current high score) and a blinking
+  INSERT COIN neon sign. Drawn once per resize and cached; only the sign
+  redraws. Shown when each side has at least 170 CSS px; narrower windows
+  keep plain black. The bezel setting now adds just its trim lines there.
+- **Touch detection:** devices whose main pointer is a finger start with the
+  thumb controls; everything else (including touchscreen laptops) starts in
+  keyboard mode with the side art and switches to thumb controls on the
+  first touch.
 - **Touchscreens held sideways (tablets, phones in a browser):** handheld
   layout - picture full height in the middle, the stick's area is the whole
   left side, FIRE the whole right side (each at least 150 CSS px). Before

@@ -94,7 +94,10 @@ export class App {
     this.progress = loadProgress();
     this.appVorg = new Vorg(new Rng((Date.now() ^ 0x5eed) >>> 0), (_t, line) => this.onSay(line));
     this.debug = new DebugOverlay(this);
-    this.display.touch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    // A finger-first device starts with the thumb controls; anything else
+    // (monitors, laptops, even touchscreen laptops) starts in keyboard mode and
+    // switches to the thumb controls the moment the screen is touched.
+    this.display.touch = matchMedia('(pointer: coarse)').matches;
     this.applySettings();
     this.onResize();
     window.addEventListener('resize', () => this.onResize());
@@ -564,6 +567,8 @@ export class App {
       drawSubtitle(fb, this.appVorg.current.text, FB_H - 30);
     }
     this.lastLook = look;
+    const top = this.scores[0];
+    if (top) this.display.sideInfo = { hiName: top.initials, hiScore: top.score };
     buildLineMap(fb.lineMap, look, this.frame, ov);
     this.debug.drawInFramebuffer(fb);
     if (this.debug.visible || this.debug.justClosed) {
