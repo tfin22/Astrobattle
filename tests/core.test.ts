@@ -57,6 +57,26 @@ describe('portrait layout', () => {
     expect(l.scale).toBe(5);
     expect(l.play.y + l.play.h).toBeLessThanOrEqual(l.controls.y);
   });
+  it('phone held sideways: picture full height in the middle, stick left, fire right', () => {
+    const l = computeLayout(844, 390, 3, true);
+    expect(l.mode).toBe('sides');
+    expect(l.play.h).toBeGreaterThanOrEqual(l.devH * 0.98);
+    // Thumb areas on both sides, each at least 150 CSS px, never over the picture.
+    expect(l.stickZone.x + l.stickZone.w).toBeLessThanOrEqual(l.play.x);
+    expect(l.fireZone.x).toBeGreaterThanOrEqual(l.play.x + l.play.w);
+    expect(l.stickZone.w / 3).toBeGreaterThanOrEqual(150);
+    expect(l.fireZone.w / 3).toBeGreaterThanOrEqual(150);
+    expect(l.fire.x).toBeGreaterThan(l.play.x + l.play.w);
+    expect(l.dpad.x).toBeLessThan(l.play.x);
+  });
+  it('tablet held sideways: a bigger picture than with controls underneath', () => {
+    const l = computeLayout(1180, 820, 2, true);
+    expect(l.mode).toBe('sides');
+    expect(l.play.h).toBeGreaterThanOrEqual(l.devH * 0.98);
+  });
+  it('portrait phone keeps controls below', () => {
+    expect(computeLayout(390, 844, 3, true).mode).toBe('below');
+  });
   it('centres the picture with no controls on desktop', () => {
     const l = computeLayout(1280, 800, 1, false);
     expect(l.controls.h).toBe(0);

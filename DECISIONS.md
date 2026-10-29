@@ -319,3 +319,18 @@ checked against documentation.
 - High-frequency hiss index (first-difference energy / energy) 0.52 -> 0.04.
   Recogniser word score 45% -> 48%. `scripts/speech-levels.ts` re-measures;
   `tests/voice-quality.test.ts` guards the balance and hiss.
+
+## Screen shapes
+
+- **Monitors / desktop (no touch):** the picture runs full height in the
+  middle with black either side, like the 1981 cabinet's vertical monitor.
+  The bezel setting tints the side bars and adds trim.
+- **Touchscreens held sideways (tablets, phones in a browser):** handheld
+  layout - picture full height in the middle, the stick's area is the whole
+  left side, FIRE the whole right side (each at least 150 CSS px). Before
+  this the controls sat underneath, which left a phone held sideways with a
+  tiny picture.
+- **Phones upright:** unchanged - picture on top, controls below.
+- Going fullscreen still locks Android phones to portrait, as the spec
+  asks; the sideways layout is for tablets, desktop browsers and phones
+  that aren't fullscreen.

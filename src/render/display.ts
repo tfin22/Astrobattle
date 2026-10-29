@@ -30,7 +30,6 @@ export class Display {
   /** Set when something outside the controls (debug) draws on the UI layer. */
   uiDirty = true;
   private uiKey = '';
-  private panel: HTMLCanvasElement | null = null;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext('2d')!;
@@ -80,7 +79,6 @@ export class Display {
       c.style.height = l.play.h / dpr + 'px';
     }
     this.buildCrtLayer();
-    this.panel = null;
     this.uiDirty = true;
   }
 
@@ -171,22 +169,24 @@ export class Display {
     const { ctx, layout: l } = this;
     const c = l.controls;
     const d = l.dpr;
-    // The control panel background, cached.
-    if (!this.panel) {
-      const p = document.createElement('canvas');
-      p.width = c.w;
-      p.height = c.h;
-      const x = p.getContext('2d')!;
-      const g = x.createLinearGradient(0, 0, 0, c.h);
+    // The control panel: behind each thumb area, with a trim line on the
+    // edge that meets the picture.
+    for (const z of [l.stickZone, l.fireZone]) {
+      if (z.w <= 0 || z.h <= 0) continue;
+      const g = ctx.createLinearGradient(0, z.y, 0, z.y + z.h);
       g.addColorStop(0, '#16101f');
       g.addColorStop(1, '#07050b');
-      x.fillStyle = g;
-      x.fillRect(0, 0, c.w, c.h);
-      x.fillStyle = '#e0306a';
-      x.fillRect(0, 0, c.w, Math.max(1, Math.round(d * 1.5)));
-      this.panel = p;
+      ctx.fillStyle = g;
+      ctx.fillRect(z.x, z.y, z.w, z.h);
     }
-    ctx.drawImage(this.panel, c.x, c.y);
+    ctx.fillStyle = '#e0306a';
+    const t = Math.max(1, Math.round(d * 1.5));
+    if (l.mode === 'sides') {
+      ctx.fillRect(l.play.x - t, 0, t, l.devH);
+      ctx.fillRect(l.play.x + l.play.w, 0, t, l.devH);
+    } else {
+      ctx.fillRect(c.x, c.y, c.w, t);
+    }
     if (!show) return;
 
     // Stick (or d-pad).
@@ -219,8 +219,8 @@ export class Display {
       ctx.arc(s.kx, s.ky, 20 * d, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      const x = l.stickZone.x + l.stickZone.w * 0.45;
-      const y = l.fire.y;
+      const x = l.stickHint.x;
+      const y = l.stickHint.y;
       ctx.strokeStyle = 'rgba(90,209,255,0.22)';
       ctx.lineWidth = 2 * d;
       ctx.beginPath();
