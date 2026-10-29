@@ -44,13 +44,18 @@ describe('deterministic trig', () => {
 });
 
 describe('portrait layout', () => {
-  it('uses integer scaling on a 390x844 phone and keeps controls below the picture', () => {
+  it('fills the width of a 390x844 phone by default (bigger sprites), controls below', () => {
     const l = computeLayout(390, 844, 3, true);
+    expect(l.play.w).toBeGreaterThanOrEqual(l.devW * 0.99);
+    expect(l.scale).toBeGreaterThan(5.5);
+    expect(l.play.y + l.play.h).toBeLessThanOrEqual(l.controls.y);
+    expect(l.controls.h / 3).toBeGreaterThanOrEqual(180);
+  });
+  it('the Sharp setting keeps whole-number scaling (5x) on the same phone', () => {
+    const l = computeLayout(390, 844, 3, true, true);
     expect(l.integer).toBe(true);
     expect(l.scale).toBe(5);
     expect(l.play.y + l.play.h).toBeLessThanOrEqual(l.controls.y);
-    expect(l.controls.h / 3).toBeGreaterThanOrEqual(180);
-    expect(l.play.w).toBeLessThanOrEqual(l.devW);
   });
   it('centres the picture with no controls on desktop', () => {
     const l = computeLayout(1280, 800, 1, false);

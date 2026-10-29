@@ -132,6 +132,10 @@ export class App {
   applySettings(): void {
     this.display.crt = this.settings.crt;
     this.display.bezel = this.settings.bezel;
+    if (this.display.sharp !== this.settings.sharpScreen) {
+      this.display.sharp = this.settings.sharpScreen;
+      if (this.input.layout) this.onResize();
+    }
     this.input.dpadMode = this.settings.dpad;
     this.audio.apply(this.settings.sound, this.settings.volume);
   }
@@ -438,7 +442,7 @@ export class App {
   settingsItems(): MenuItem[] {
     const s = this.settings;
     const save = () => { saveSettings(s); this.applySettings(); };
-    const toggle = (k: 'holdToFire' | 'dpad' | 'sound' | 'subtitles' | 'crt' | 'bezel' | 'haptics') => () => { s[k] = !s[k]; save(); };
+    const toggle = (k: 'holdToFire' | 'dpad' | 'sound' | 'subtitles' | 'crt' | 'bezel' | 'haptics' | 'sharpScreen') => () => { s[k] = !s[k]; save(); };
     const onoff = (v: boolean) => (v ? 'ON' : 'OFF');
     const step = (d: number) => {
       const i = DIFFICULTIES.indexOf(s.difficulty);
@@ -455,6 +459,7 @@ export class App {
       { label: 'VOLUME', value: () => String(Math.round(s.volume * 10)), action: () => { s.volume = s.volume >= 1 ? 0.1 : Math.min(1, s.volume + 0.1); save(); },
         left: () => { s.volume = Math.max(0, s.volume - 0.1); save(); }, right: () => { s.volume = Math.min(1, s.volume + 0.1); save(); } },
       { label: 'SUBTITLES', value: () => onoff(s.subtitles), action: toggle('subtitles'), left: toggle('subtitles'), right: toggle('subtitles') },
+      { label: 'SCREEN', value: () => (s.sharpScreen ? 'SHARP' : 'FILL'), action: toggle('sharpScreen'), left: toggle('sharpScreen'), right: toggle('sharpScreen') },
       { label: 'CRT MODE', value: () => onoff(s.crt), action: toggle('crt'), left: toggle('crt'), right: toggle('crt') },
       { label: 'BEZEL', value: () => onoff(s.bezel), action: toggle('bezel'), left: toggle('bezel'), right: toggle('bezel') },
       { label: 'HAPTICS', value: () => onoff(s.haptics), action: toggle('haptics'), left: toggle('haptics'), right: toggle('haptics') },
@@ -757,7 +762,7 @@ export class App {
         fb.text(b.text, b.x0, y, sel ? PEN.HUD2 : PEN.HUD1);
       }
     });
-    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 238, PEN.STAR2, 'small');
+    fb.textCentered('TAP < OR > TO CHANGE A VALUE', FB_W / 2, 252, PEN.STAR2, 'small');
   }
 
   private drawPractice(): void {

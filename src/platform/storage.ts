@@ -7,6 +7,8 @@ import type { Difficulty } from '../game/types';
 
 export interface Settings {
   difficulty: Difficulty;
+  /** Fill the screen (bigger) or keep whole-number scaling (sharper). */
+  sharpScreen: boolean;
   startShips: number;     // 3..5
   holdToFire: boolean;
   dpad: boolean;
@@ -20,6 +22,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   difficulty: 'normal',
+  sharpScreen: false,
   startShips: 3,
   holdToFire: false,
   dpad: false,

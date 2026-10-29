@@ -25,11 +25,15 @@ export interface Layout {
 export const MIN_CONTROLS_CSS = 180;
 
 /**
- * Portrait layout: the arcade picture on top, as large as fits with integer
- * scaling where that doesn't waste much, and the thumb controls below it so
- * they never cover play.
+ * Portrait layout: the arcade picture on top, as large as fits, and the
+ * thumb controls below it so they never cover play.
+ *
+ * By default the picture fills the space (nearest-neighbour at a fractional
+ * scale: on a phone's dense screen the odd uneven pixel is invisible, and
+ * sprites come out ~15% bigger). `sharp` keeps whole-number scaling, every
+ * pixel exactly square, wherever that doesn't waste much.
  */
-export function computeLayout(cssW: number, cssH: number, dpr: number, touch: boolean): Layout {
+export function computeLayout(cssW: number, cssH: number, dpr: number, touch: boolean, sharp = false): Layout {
   const devW = Math.max(1, Math.round(cssW * dpr));
   const devH = Math.max(1, Math.round(cssH * dpr));
   const ctrlCss = touch ? Math.max(MIN_CONTROLS_CSS, cssH * 0.26) : 0;
@@ -37,9 +41,10 @@ export function computeLayout(cssW: number, cssH: number, dpr: number, touch: bo
   const fit = Math.min(devW / FB_W, availH / FB_H);
   let scale = Math.floor(fit);
   let integer = true;
-  // Integer scaling only where it fits well; otherwise nearest-neighbour at
-  // the best fractional size so small phones still get a big picture.
-  if (scale < 1 || scale / fit < 0.86) {
+  // Whole numbers only when asked for (and they fit well), or when the
+  // whole number is already within 2% of filling the space.
+  const keepInteger = sharp ? scale / fit >= 0.86 : scale / fit >= 0.98;
+  if (scale < 1 || !keepInteger) {
     scale = fit;
     integer = false;
   }

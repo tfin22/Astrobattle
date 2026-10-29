@@ -25,6 +25,8 @@ export class Display {
   crt = false;
   bezel = false;
   touch = false;
+  /** Whole-number scaling only (the Sharp screen setting). */
+  sharp = false;
   /** Set when something outside the controls (debug) draws on the UI layer. */
   uiDirty = true;
   private uiKey = '';
@@ -66,7 +68,7 @@ export class Display {
     const cssW = window.innerWidth;
     const cssH = window.innerHeight;
     const dpr = Math.min(window.devicePixelRatio || 1, 4);
-    const l = (this.layout = computeLayout(cssW, cssH, dpr, this.touch));
+    const l = (this.layout = computeLayout(cssW, cssH, dpr, this.touch, this.sharp));
     this.canvas.width = l.devW;
     this.canvas.height = l.devH;
     this.canvas.style.width = cssW + 'px';

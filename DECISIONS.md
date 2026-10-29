@@ -38,9 +38,15 @@ checked against documentation.
 - **Debug key.** The spec asks for both WASD movement and "D for debug". Plain
   D moves right; **Shift+D** (or the backquote key) toggles the debug overlay.
   Three fingers on the touchscreen at once also toggles it.
-- **Layout.** Picture on top, integer-scaled when the integer size is at least
-  86% of the best fit; otherwise nearest-neighbour at the best fractional
-  scale (small phones). All remaining height below the picture is the control
+- **Layout.** Picture on top. By default it **fills** the space
+  (nearest-neighbour at a fractional scale: at phone pixel densities the odd
+  pixel that is one device pixel wider can't be seen). Playtest: on a
+  390x844 phone whole-number (5x) scaling left 13% of the width empty and
+  made everything look small - though measured against a frame of the 1981
+  game our sprites are the same size in pixels (its invaders 11-12 px on a
+  16 px pitch, ours 11 on 14). Filling makes them ~15% bigger. Settings ->
+  SCREEN: SHARP restores whole-number scaling (used when within 86% of the
+  fit). All remaining height below the picture is the control
   panel (at least 180 CSS px). Without a touchscreen the picture is centred
   and no controls are drawn.
 
