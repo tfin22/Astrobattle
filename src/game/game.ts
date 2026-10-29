@@ -477,7 +477,8 @@ export class Game {
     this.sfx('death');
     this.events.push({ t: 'haptic', id: 'death' });
     this.setPhase('dying');
-    this.say(this.lives <= 0 ? 'lastShip' : 'playerDeath');
+    // Down to the last ship: VORG gloats about that; otherwise a death line.
+    this.say(this.lives === 1 ? 'lastShip' : 'playerDeath');
   }
 
   private updateSaucer(): void {

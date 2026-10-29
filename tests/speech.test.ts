@@ -55,6 +55,21 @@ describe('the speech synthesiser', () => {
   });
 });
 
+describe('which line plays', () => {
+  it('"last ship" lines play when you are down to your last ship, not on the final death', () => {
+    const g = newGame({ startShips: 2 });
+    g.killPlayer();
+    expect(g.lives).toBe(1);
+    const said = g.vorg.log.map((l) => l.trigger);
+    const pending = (g.vorg as unknown as { pending: { trigger: string } | null }).pending?.trigger;
+    expect([...said, pending]).toContain('lastShip');
+    const h = newGame({ startShips: 1 });
+    h.killPlayer();
+    const said2 = [...h.vorg.log.map((l) => l.trigger), (h.vorg as unknown as { pending: { trigger: string } | null }).pending?.trigger];
+    expect(said2).not.toContain('lastShip');
+  });
+});
+
 describe('when VORG speaks', () => {
   function vorg() {
     const said: string[] = [];
