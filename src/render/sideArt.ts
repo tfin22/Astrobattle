@@ -91,7 +91,7 @@ export class SideArt {
     pixelText(x, GAME_TAGLINE, cx, r.y + r.h * 0.07 + r.w * 0.82 * (7 / textWidthUnits(GAME_TITLE, BIG)) + 26 * u, 3 * u, NEON_CYAN, SMALL);
     // The controls card, like the instructions on a control panel.
     const cw = Math.min(r.w * 0.86, 400 * u);
-    const ch = 372 * u;
+    const ch = 318 * u;
     const top = Math.max(r.y + r.h * 0.34, r.y + r.h - ch - 40 * u);
     const left = cx - cw / 2;
     x.save();
@@ -113,10 +113,8 @@ export class SideArt {
     const rows: [string[], string][] = [
       [['←', '→', '↑', '↓'], 'MOVE'],
       [['W', 'A', 'S', 'D'], 'MOVE'],
-      [['SPACE', 'Z'], 'FIRE'],
+      [['SPACE', 'Z', 'ENTER'], 'FIRE'],
       [['P'], 'PAUSE'],
-      [['5'], 'INSERT COIN'],
-      [['1'], 'START'],
     ];
     let y = top + 70 * u;
     for (const [keys, what] of rows) {
@@ -132,9 +130,10 @@ export class SideArt {
     x.fillStyle = NEON_PINK;
     x.font = `bold ${Math.round(13 * u)}px "Courier New", monospace`;
     x.textAlign = 'center';
-    x.fillText('FIRE AGAIN TO CANCEL YOUR SHOT', cx, y + 4 * u);
+    x.fillText('FIRE ALSO SELECTS AND INSERTS COINS', cx, y + 4 * u);
+    x.fillText('FIRE AGAIN TO CANCEL YOUR SHOT', cx, y + 24 * u);
     x.fillStyle = '#9ad8ff';
-    x.fillText('GAMEPAD: STICK MOVES, ANY BUTTON FIRES', cx, y + 24 * u);
+    x.fillText('GAMEPAD: STICK MOVES, ANY BUTTON FIRES', cx, y + 52 * u);
   }
 
   private rightPanel(x: CanvasRenderingContext2D, r: Rect, info: SideInfo, rng: Rng): void {

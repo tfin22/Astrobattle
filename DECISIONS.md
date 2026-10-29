@@ -346,3 +346,12 @@ checked against documentation.
   device allows it (Android Chrome); changing it while fullscreen applies
   at once. Where locking isn't supported (iOS, or not fullscreen) the
   layout just follows how the device is held.
+
+## Keyboard: one button
+
+- Playtest: separate coin (5) and start (1) keys were clunky. FIRE now does
+  everything - Space, Z or Enter fire in play, select in menus, and insert
+  the coin on the title ("FIRE TO INSERT COIN" on keyboard screens, "TAP TO
+  INSERT COIN" on touchscreens). 5 and 1 still work but are no longer shown.
+  `scripts/keyboard-test.mjs` plays from the title into a game with fire keys
+  only.

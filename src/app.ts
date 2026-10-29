@@ -579,6 +579,11 @@ export class App {
     this.debug.drawOnScreen(this.display);
   }
 
+  /** What the attract screens ask for: a tap on touchscreens, FIRE elsewhere. */
+  get coinPrompt(): string {
+    return this.display.touch ? 'TAP TO INSERT COIN' : 'FIRE TO INSERT COIN';
+  }
+
   get look(): Look {
     return this.lastLook;
   }
@@ -605,7 +610,7 @@ export class App {
       const r = drawGame(fb, this.demo, this.stars, this.frame, { hiScore: this.scores[0]?.score ?? 0, showPause: false }, false);
       fb.rect(56, 150, 92, 14, PEN.BLACK);
       fb.textCentered('DEMO', FB_W / 2, 154, PEN.HUD1);
-      if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 200, PEN.WHITE);
+      if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 200, PEN.WHITE);
       return r.look;
     }
     this.header();
@@ -613,7 +618,7 @@ export class App {
       case 'story': {
         // The opening scroll climbs up under a fixed title.
         fb.textCentered(GAME_TITLE, FB_W / 2, 16, PEN.HUD2, 'big', 3);
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 44, PEN.WHITE);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 44, PEN.WHITE);
         const top = 60;
         const y0 = FB_H - 8 - this.screenT * STORY_SPEED;
         STORY.forEach(([text, style], i) => {
@@ -628,7 +633,7 @@ export class App {
         this.drawLogo(64);
         fb.textCentered('LOST FOR DECADES. FOUND IN 2026.', FB_W / 2, 140, PEN.STAR2, 'small');
         drawVorgFace(fb, FB_W / 2, 190, 0, 1);
-        if (blink) fb.textCentered(this.display.touch ? 'TAP TO INSERT COIN' : 'INSERT COIN', FB_W / 2, 236, PEN.WHITE);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 236, PEN.WHITE);
         fb.textCentered('VORG IS WATCHING', FB_W / 2, 290, PEN.STAR2, 'small');
         break;
       }
@@ -640,12 +645,12 @@ export class App {
         drawVorgFace(fb, FB_W / 2, 142, mouth, 4);
         const text = cur?.text ?? this.appVorg.log[this.appVorg.log.length - 1]?.text ?? '';
         wrapText(text, FB_W - 16).forEach((l, i) => fb.textCentered(l, FB_W / 2, 214 + i * 11, PEN.WHITE));
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 270, PEN.HUD2);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 270, PEN.HUD2);
         break;
       }
       case 'scores':
         this.drawScoreTable(40);
-        if (blink) fb.textCentered('INSERT COIN', FB_W / 2, 290, PEN.WHITE);
+        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 290, PEN.WHITE);
         break;
       case 'table':
         this.drawScoringTable();
