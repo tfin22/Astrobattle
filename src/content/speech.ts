@@ -1,5 +1,5 @@
 /**
- * Everything VORG says. All lines are original to VORF26.
+ * Everything VORG says. All lines are original to VORG26.
  *
  * Each line has subtitle text and a phoneme string for the synthesiser
  * (see audio/phonemes.ts for the symbols: digits are pitch levels 0-3,

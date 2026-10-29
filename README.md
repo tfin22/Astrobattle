@@ -1,4 +1,4 @@
-# VORF26
+# VORG26
 
 A lost arcade treasure, rediscovered: an homage to Gorf (1981), for phones
 in portrait. (Developed under the working title Quantum Cadet, which lives

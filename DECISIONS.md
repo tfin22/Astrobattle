@@ -355,3 +355,18 @@ checked against documentation.
   INSERT COIN" on touchscreens). 5 and 1 still work but are no longer shown.
   `scripts/keyboard-test.mjs` plays from the title into a game with fire keys
   only.
+
+## Name and side art, toned down
+
+- The name is now **VORG26** (the villain's name works better as a title);
+  `GAME_TITLE` in `content/text.ts`, so scroll, title screens, marquee,
+  page title and app name all follow.
+- The side art competed with the game (measured on a 1920x1080 screenshot:
+  walls 5-7x the game picture's brightness and 3x as colourful). It is now
+  drawn in three layers, each dimmed over black and partly desaturated
+  (`DIM` in `render/sideArt.ts`): the wall and graffiti hardest (alpha 0.24,
+  50% desaturated), the logo less, the controls card least so it stays
+  readable; keycaps are grey rather than white. Result: walls 12-21 vs the
+  game's 7, and no more colourful than the game. The INSERT COIN sign only
+  blinks while the machine is idle; during play it stays lit and dim.
+  `scripts/side-brightness.py` re-measures.

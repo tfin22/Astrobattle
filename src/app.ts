@@ -569,6 +569,7 @@ export class App {
     this.lastLook = look;
     const top = this.scores[0];
     if (top) this.display.sideInfo = { hiName: top.initials, hiScore: top.score };
+    this.display.sideIdle = this.screen !== 'game' && this.screen !== 'continue';
     buildLineMap(fb.lineMap, look, this.frame, ov);
     this.debug.drawInFramebuffer(fb);
     if (this.debug.visible || this.debug.justClosed) {

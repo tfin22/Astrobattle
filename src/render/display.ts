@@ -31,6 +31,8 @@ export class Display {
   /** What the side art shows (top of the high-score table). */
   sideInfo: SideInfo = { hiName: 'AAM', hiScore: 20000 };
   private sideArt = new SideArt();
+  /** True on attract/menu screens (the side sign may blink); false in play. */
+  sideIdle = true;
   /** Set when something outside the controls (debug) draws on the UI layer. */
   uiDirty = true;
   private uiKey = '';
@@ -124,7 +126,8 @@ export class Display {
       : 'none';
     // Side art on keyboard screens, with a neon sign that blinks.
     const art = sideArtPanels(this.layout) !== null;
-    const blink = art ? Math.floor(performance.now() / 650) % 2 === 0 : false;
+    // The neon sign blinks only while the machine is idle, never during play.
+    const blink = art ? (this.sideIdle ? Math.floor(performance.now() / 650) % 2 === 0 : true) : false;
     const fullKey = `${key}|${art ? 1 : 0}|${blink ? 1 : 0}|${this.sideInfo.hiName}${this.sideInfo.hiScore}`;
     if (!this.uiDirty && fullKey === this.uiKey) return;
     this.uiKey = fullKey;

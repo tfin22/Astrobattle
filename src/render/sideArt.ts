@@ -6,7 +6,7 @@ import { GAME_TITLE, GAME_TAGLINE } from '../content/text';
 
 /**
  * Cabinet side art for screens with no touchscreen and room either side of
- * the picture (monitors, laptops): a brick wall with the VORF26 logo and a
+ * the picture (monitors, laptops): a brick wall with the game's logo and a
  * keyboard controls card on the left, 80s graffiti on the right. Everything
  * is drawn here from code; nothing is loaded.
  */
@@ -27,6 +27,18 @@ export function sideArtPanels(l: Layout): { left: Rect; right: Rect } | null {
   };
 }
 
+/**
+ * How much each layer is dimmed (alpha over black) and desaturated (0..1).
+ * Tuned so the walls sit near the game picture's own brightness and the
+ * controls card stays easy to read.
+ */
+export const DIM = {
+  wall: { alpha: 0.24, desaturate: 0.5 },
+  logo: { alpha: 0.6, desaturate: 0.35 },
+  card: { alpha: 0.85, desaturate: 0.3 },
+  sign: 0.5,
+};
+
 const NEON_PINK = '#ff3d7f';
 const NEON_CYAN = '#29e6ff';
 const NEON_YELLOW = '#ffd23a';
@@ -35,7 +47,10 @@ export class SideArt {
   private cache: HTMLCanvasElement | null = null;
   private cacheKey = '';
 
-  /** Draw the art (cached) plus the blinking neon. */
+  /**
+   * Draw the art (cached) plus the neon sign. The sign blinks only while the
+   * machine is idle (attract, menus); during play it stays lit and dim.
+   */
   draw(ctx: CanvasRenderingContext2D, l: Layout, info: SideInfo, blinkOn: boolean): void {
     const panels = sideArtPanels(l);
     if (!panels) return;
@@ -45,17 +60,27 @@ export class SideArt {
       this.cacheKey = key;
     }
     ctx.drawImage(this.cache, 0, 0);
+    ctx.save();
+    ctx.globalAlpha = DIM.sign;
     this.neonSign(ctx, panels.right, blinkOn);
+    ctx.restore();
   }
 
+  /**
+   * The art is drawn in three layers - the wall and its graffiti, the logo,
+   * the controls card - then each is composited dimmed and desaturated by
+   * its own amount (DIM), so the sides support the game rather than compete
+   * with it. Baked into one cached canvas.
+   */
   private render(l: Layout, p: { left: Rect; right: Rect }, info: SideInfo): HTMLCanvasElement {
-    const c = document.createElement('canvas');
-    c.width = l.devW;
-    c.height = l.devH;
-    const x = c.getContext('2d')!;
+    const layer = () => {
+      const c = document.createElement('canvas');
+      c.width = l.devW;
+      c.height = l.devH;
+      return c;
+    };
     const rng = new Rng(1981);
-    // Each panel is clipped to its own side, so nothing spills onto the picture.
-    const clipped = (r: Rect, fn: () => void) => {
+    const clipped = (x: CanvasRenderingContext2D, r: Rect, fn: () => void) => {
       x.save();
       x.beginPath();
       x.rect(r.x, r.y, r.w, r.h);
@@ -63,32 +88,57 @@ export class SideArt {
       fn();
       x.restore();
     };
-    clipped(p.left, () => {
-      bricks(x, p.left, rng);
-      this.leftPanel(x, p.left);
+    const wall = layer();
+    const wx = wall.getContext('2d')!;
+    clipped(wx, p.left, () => bricks(wx, p.left, rng));
+    clipped(wx, p.right, () => {
+      bricks(wx, p.right, rng);
+      this.rightPanel(wx, p.right, info, rng);
     });
-    clipped(p.right, () => {
-      bricks(x, p.right, rng);
-      this.rightPanel(x, p.right, info, rng);
-    });
+    const logo = layer();
+    const lx = logo.getContext('2d')!;
+    clipped(lx, p.left, () => this.logo(lx, p.left));
+    const card = layer();
+    const cx = card.getContext('2d')!;
+    clipped(cx, p.left, () => this.controlsCard(cx, p.left));
+
+    const out = layer();
+    const x = out.getContext('2d')!;
+    x.fillStyle = '#000';
+    x.fillRect(0, 0, l.devW, l.devH);
+    for (const [c, d] of [[wall, DIM.wall], [logo, DIM.logo], [card, DIM.card]] as const) {
+      x.globalAlpha = d.alpha;
+      x.drawImage(c, 0, 0);
+      // Partial desaturation: blend grey in 'saturation' mode.
+      x.globalAlpha = 1;
+      x.globalCompositeOperation = 'saturation';
+      x.fillStyle = `rgba(128,128,128,${d.desaturate})`;
+      for (const r of [p.left, p.right]) x.fillRect(r.x, r.y, r.w, r.h);
+      x.globalCompositeOperation = 'source-over';
+    }
     // Fade both walls into the picture's edge.
     for (const [r, dir] of [[p.left, 1], [p.right, -1]] as const) {
       const edge = dir > 0 ? r.x + r.w : r.x;
-      const g = x.createLinearGradient(edge, 0, edge - dir * r.w * 0.25, 0);
-      g.addColorStop(0, 'rgba(0,0,0,0.85)');
+      const g = x.createLinearGradient(edge, 0, edge - dir * r.w * 0.3, 0);
+      g.addColorStop(0, 'rgba(0,0,0,0.9)');
       g.addColorStop(1, 'rgba(0,0,0,0)');
       x.fillStyle = g;
-      x.fillRect(dir > 0 ? edge - r.w * 0.25 : edge, 0, r.w * 0.25, r.h);
+      x.fillRect(dir > 0 ? edge - r.w * 0.3 : edge, 0, r.w * 0.3, r.h);
     }
-    return c;
+    return out;
   }
 
-  private leftPanel(x: CanvasRenderingContext2D, r: Rect): void {
+  private logo(x: CanvasRenderingContext2D, r: Rect): void {
     const u = unit(r);
     const cx = r.x + r.w / 2;
-    // The logo: chunky pixel letters, chrome-to-neon, with a glow.
+    // Chunky pixel letters, chrome-to-neon, with a glow.
     pixelLogo(x, GAME_TITLE, cx, r.y + r.h * 0.07, Math.min(r.w * 0.82, 420 * u));
     pixelText(x, GAME_TAGLINE, cx, r.y + r.h * 0.07 + r.w * 0.82 * (7 / textWidthUnits(GAME_TITLE, BIG)) + 26 * u, 3 * u, NEON_CYAN, SMALL);
+  }
+
+  private controlsCard(x: CanvasRenderingContext2D, r: Rect): void {
+    const u = unit(r);
+    const cx = r.x + r.w / 2;
     // The controls card, like the instructions on a control panel.
     const cw = Math.min(r.w * 0.86, 400 * u);
     const ch = 318 * u;
@@ -96,7 +146,7 @@ export class SideArt {
     const left = cx - cw / 2;
     x.save();
     x.shadowColor = NEON_CYAN;
-    x.shadowBlur = 18 * u;
+    x.shadowBlur = 8 * u;
     roundRect(x, left, top, cw, ch, 14 * u);
     x.fillStyle = 'rgba(10,6,20,0.92)';
     x.fill();
@@ -309,10 +359,10 @@ function keycap(x: CanvasRenderingContext2D, label: string, left: number, top: n
   const w = Math.max(30 * u, x.measureText(label).width + 16 * u);
   const h = 30 * u;
   roundRect(x, left, top + 3 * u, w, h, 5 * u);
-  x.fillStyle = '#7d7684';
+  x.fillStyle = '#5e5868';
   x.fill();
   roundRect(x, left, top, w, h - 2 * u, 5 * u);
-  x.fillStyle = '#ece6f2';
+  x.fillStyle = '#b8b0c4';
   x.fill();
   x.fillStyle = '#1a1020';
   x.textAlign = 'center';
