@@ -26,19 +26,24 @@ import { goFullscreen, haptic, isFullscreen, keepAwake, lockOrientation } from '
 import { DIFFICULTIES, type GameEvent, type GameMode } from './game/types';
 import type { Enemy } from './game/types';
 import { DebugOverlay } from './debug/overlay';
-import { STORY, STORY_LINE, STORY_SPEED } from './content/story';
+import { STORY, STORY_LINE, STORY_SPEED, type StoryStyle } from './content/story';
+import { CREDITS, CREDITS_SPEED } from './content/credits';
 import { GAME_TITLE, GAME_TAGLINE } from './content/text';
 
-export type Screen = 'attract' | 'menu' | 'game' | 'continue' | 'initials' | 'settings' | 'practice' | 'howto';
-type AttractPage = 'title' | 'story' | 'vorg' | 'scores' | 'demo' | 'table';
+export type Screen = 'attract' | 'menu' | 'game' | 'continue' | 'initials' | 'settings' | 'practice' | 'howto' | 'credits';
+type AttractPage = 'title' | 'story' | 'vorg' | 'scores' | 'demo' | 'table' | 'credits';
+
+/** Frames for a scroll to climb all the way through. */
+const scrollFrames = (lines: unknown[], speed = STORY_SPEED): number => Math.ceil((320 - 64 + lines.length * STORY_LINE) / speed);
 
 const ATTRACT: { page: AttractPage; frames: number }[] = [
   { page: 'title', frames: 420 },
-  { page: 'story', frames: Math.ceil((320 - 64 + STORY.length * STORY_LINE) / STORY_SPEED) },
+  { page: 'story', frames: scrollFrames(STORY) },
   { page: 'vorg', frames: 360 },
   { page: 'scores', frames: 420 },
   { page: 'demo', frames: 480 * 5 },
   { page: 'table', frames: 480 },
+  { page: 'credits', frames: scrollFrames(CREDITS, CREDITS_SPEED) },
 ];
 const SCORES_PAGE = ATTRACT.findIndex((p) => p.page === 'scores');
 const DEMO_SEED = 19810101;
@@ -210,6 +215,10 @@ export class App {
       case 'howto':
         if (this.screenT > 20 && (inp.fire || inp.taps.length || inp.back || inp.start)) this.setScreen('menu');
         break;
+      case 'credits':
+        if (this.screenT > 20 && (inp.fire || inp.taps.length || inp.back || inp.start)) this.setScreen('menu');
+        if (this.screenT >= scrollFrames(CREDITS, CREDITS_SPEED)) this.screenT = 0;
+        break;
     }
     void keepAwake(this.screen === 'game' && !this.paused);
   }
@@ -268,6 +277,7 @@ export class App {
       { label: 'PRACTICE', action: () => { this.practice.sel = 0; this.setScreen('practice'); } },
       { label: 'HOW TO PLAY', action: () => this.setScreen('howto') },
       { label: 'SETTINGS', action: () => { this.settingsSel = 0; this.confirmReset = false; this.setScreen('settings'); } },
+      { label: 'CREDITS', action: () => this.setScreen('credits') },
     ];
   }
 
@@ -561,8 +571,11 @@ export class App {
       case 'howto':
         this.drawHowTo();
         break;
+      case 'credits':
+        look = this.drawCredits();
+        break;
     }
-    const showAppLine = this.screen === 'menu' || (this.screen === 'attract' && this.attractPage !== 'vorg' && this.attractPage !== 'demo' && this.attractPage !== 'story');
+    const showAppLine = this.screen === 'menu' || (this.screen === 'attract' && this.attractPage !== 'vorg' && this.attractPage !== 'demo' && this.attractPage !== 'story' && this.attractPage !== 'credits');
     if (this.settings.subtitles && showAppLine && this.appVorg.current) {
       drawSubtitle(fb, this.appVorg.current.text, FB_H - 30);
     }
@@ -616,20 +629,12 @@ export class App {
     }
     this.header();
     switch (page) {
-      case 'story': {
-        // The opening scroll climbs up under a fixed title.
-        fb.textCentered(GAME_TITLE, FB_W / 2, 16, PEN.HUD2, 'big', 3);
-        if (blink) fb.textCentered(this.coinPrompt, FB_W / 2, 44, PEN.WHITE);
-        const top = 60;
-        const y0 = FB_H - 8 - this.screenT * STORY_SPEED;
-        STORY.forEach(([text, style], i) => {
-          const y = Math.round(y0 + i * STORY_LINE);
-          if (!text || y < top || y > FB_H - 14) return;
-          const pen = style === 'head' ? PEN.HUD1 : style === 'rank' ? PEN.WHITE : PEN.HUD2;
-          fb.textCentered(text, FB_W / 2, y, pen);
-        });
+      case 'story':
+        this.drawScroll(STORY, blink ? this.coinPrompt : '');
         return LOOKS.story;
-      }
+      case 'credits':
+        this.drawScroll(CREDITS, blink ? this.coinPrompt : '', CREDITS_SPEED);
+        return LOOKS.story;
       case 'title': {
         this.drawLogo(64);
         fb.textCentered('LOST FOR DECADES. FOUND IN 2026.', FB_W / 2, 140, PEN.STAR2, 'small');
@@ -660,6 +665,33 @@ export class App {
         break;
     }
     return LOOKS.attract;
+  }
+
+  /** A scroll (story or credits) climbing up under the fixed title. */
+  private drawScroll(lines: [string, StoryStyle][], prompt: string, speed = STORY_SPEED): void {
+    const fb = this.fb;
+    fb.textCentered(GAME_TITLE, FB_W / 2, 16, PEN.HUD2, 'big', 3);
+    if (prompt) fb.textCentered(prompt, FB_W / 2, 44, PEN.WHITE);
+    const top = 60;
+    const y0 = FB_H - 8 - this.screenT * speed;
+    lines.forEach(([text, style], i) => {
+      const y = Math.round(y0 + i * STORY_LINE);
+      if (!text || y < top || y > FB_H - 14) return;
+      if (style === 'title') return fb.textCentered(text, FB_W / 2, y - 4, PEN.WHITE, 'big', 2);
+      const pen = style === 'head' ? PEN.HUD1 : style === 'rank' ? PEN.WHITE : PEN.HUD2;
+      fb.textCentered(text, FB_W / 2, y, pen);
+    });
+  }
+
+  /** Credits from the menu: same roll, loops until you leave. */
+  private drawCredits(): Look {
+    const fb = this.fb;
+    fb.clear(PEN.BLACK);
+    this.stars.draw(fb, this.frame);
+    this.header();
+    const back = this.display.touch ? 'TAP TO RETURN' : 'FIRE TO RETURN';
+    this.drawScroll(CREDITS, (this.frame >> 5) & 1 ? back : '', CREDITS_SPEED);
+    return LOOKS.story;
   }
 
   private drawScoreTable(y: number): void {

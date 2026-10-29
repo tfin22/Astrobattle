@@ -370,3 +370,21 @@ checked against documentation.
   game's 7, and no more colourful than the game. The INSERT COIN sign only
   blinks while the machine is idle; during play it stays lit and dim.
   `scripts/side-brightness.py` re-measures.
+
+## Credits roll
+
+- A CREDITS item on the menu, and a credits page at the end of the attract
+  loop, scroll the same way as the opening story (`content/credits.ts`).
+- The spec bans Gorf, Bally and Midway branding. On request, the credits
+  name the original in plain text as a dedication: title, year, maker,
+  designer (Jamie Fenton, Dave Nutting Associates; checked against
+  Wikipedia) and its Votrax voice, with a "not affiliated" line. No logos,
+  art or text from the original; the game world itself still never names
+  it (a test keeps it out of the story).
+- The roll credits Claude Code for design, code, art, sound, voice and
+  tests, outlines the tech in plain words and credits the human
+  anonymously ("spec, playtesting and good taste: a human").
+- Playtest: the credits read too fast at the story's speed (0.65 px a
+  frame, 3.25 lines a second). They now have their own speed,
+  `CREDITS_SPEED = 0.4` (2 lines a second, about 70 seconds in all); the
+  story keeps its pace.
