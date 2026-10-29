@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CREDITS } from '../src/content/credits';
-import { STORY } from '../src/content/story';
+import { CREDITS, CREDITS_SPEED } from '../src/content/credits';
+import { STORY, STORY_LINE } from '../src/content/story';
 import { textWidth, FB_W } from '../src/render/framebuffer';
 
 describe('credits roll', () => {
@@ -32,5 +32,10 @@ describe('credits roll', () => {
 
   it('keeps the original name out of the story itself', () => {
     expect(STORY.map(([t]) => t).join(' ')).not.toMatch(/GORF/);
+  });
+
+  it('playtest: scrolls slowly enough to read (about 2 lines a second at most)', () => {
+    const linesPerSecond = (CREDITS_SPEED * 60) / STORY_LINE;
+    expect(linesPerSecond).toBeLessThanOrEqual(2);
   });
 });

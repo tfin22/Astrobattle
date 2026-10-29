@@ -384,3 +384,7 @@ checked against documentation.
 - The roll credits Claude Code for design, code, art, sound, voice and
   tests, outlines the tech in plain words and credits the human
   anonymously ("spec, playtesting and good taste: a human").
+- Playtest: the credits read too fast at the story's speed (0.65 px a
+  frame, 3.25 lines a second). They now have their own speed,
+  `CREDITS_SPEED = 0.4` (2 lines a second, about 70 seconds in all); the
+  story keeps its pace.

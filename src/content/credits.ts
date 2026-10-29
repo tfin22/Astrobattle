@@ -10,6 +10,13 @@ import type { StoryStyle } from './story';
  * The story keeps the original's name out of the game world; this is the
  * one place it appears, as a plain-text dedication (see DECISIONS.md).
  */
+/**
+ * Pixels per frame the credits climb. Slower than the story: the lines are
+ * denser. Playtest: 0.65 (3.25 lines a second) read too fast; 0.4 is
+ * 2 lines a second.
+ */
+export const CREDITS_SPEED = 0.4;
+
 export const CREDITS: [string, StoryStyle][] = [
   ['CREDITS', 'head'],
   ['', 'body'],
